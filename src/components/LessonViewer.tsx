@@ -52,15 +52,34 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
                 </div>
             )}
 
-            {currentStep.examples && currentStep.examples.length > 0 && (
+            {currentStep.problems && currentStep.problems.length > 0 && (
                 <div className="mb-6">
                     <h4 className="font-semibold text-gray-800 mb-3">例題</h4>
-                    {currentStep.examples.map((example, index) => (
+                    {currentStep.problems.map((problem, index) => (
                         <div
                             key={index}
                             className="mb-4 p-4 bg-gray-50 rounded-lg overflow-hidden"
                         >
-                            <MathJaxDisplay content={example.detail} />
+                            <div className="mb-2">
+                                <span className="font-medium text-blue-700">
+                                    問題：
+                                </span>
+                                <MathJaxDisplay content={problem.question} />
+                            </div>
+                            <div className="mb-2">
+                                <span className="font-medium text-green-700">
+                                    答え：
+                                </span>
+                                <MathJaxDisplay content={problem.answer} />
+                            </div>
+                            {problem.hint && (
+                                <div className="text-sm text-gray-600 mt-1">
+                                    <span className="font-medium text-yellow-700">
+                                        ヒント：
+                                    </span>
+                                    <MathJaxDisplay content={problem.hint} />
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>

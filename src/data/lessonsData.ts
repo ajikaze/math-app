@@ -37,6 +37,64 @@ interface SubjectData {
     [key: string]: LearningTopic[];
 }
 
+// 例題データの形式を統一
+function normalizeExamples(
+    examples: Array<{
+        title: string;
+        detail?: string;
+        question?: string;
+        answer?: string;
+    }>
+): Example[] {
+    return examples.map((e): Example => {
+        if (e.detail !== undefined) return { title: e.title, detail: e.detail };
+        if (e.question && e.answer) {
+            return {
+                title: e.title,
+                detail: `${e.question} 答え: ${e.answer}`,
+            };
+        }
+        return { title: e.title, detail: "" };
+    });
+}
+
+// LaTeX変換用の正規表現置換関数
+function toLatexMath(str: string): string {
+    if (!str) return str;
+    let s = str;
+    // sqrt(2) → \sqrt{2}
+    s = s.replace(/sqrt\(([^)]+)\)/g, "\\sqrt{$1}");
+    // <=, >=
+    s = s.replace(/<=/g, " \\le ");
+    s = s.replace(/>=/g, " \\ge ");
+    // pi → \pi
+    s = s.replace(/\bpi\b/g, "\\pi");
+    // 分数 例: 1/2 → \frac{1}{2}（ただし小数や式の一部でない場合のみ）
+    s = s.replace(
+        /(?<![\d.])([0-9]+)\s*\/\s*([0-9]+)(?![\d.])/g,
+        "\\frac{$1}{$2}"
+    );
+    // 乗数 例: x^2 → x^{2}
+    s = s.replace(/([a-zA-Z0-9]+)\^(-?[a-zA-Z0-9]+)/g, "$1^{$2}");
+    // <, >（単独の不等号はそのまま）
+    // すでに$...$で囲まれていなければ囲む
+    if (!/^\$.*\$$/.test(s)) {
+        s = `$${s}$`;
+    }
+    return s;
+}
+
+// problemsのanswerをLaTeX記法に自動変換
+function normalizeProblems(problems: Problem[]): Problem[] {
+    return problems.map((p) => {
+        let answer = p.answer;
+        if (typeof answer === "string") {
+            answer = toLatexMath(answer);
+        }
+        return { ...p, answer };
+    });
+}
+
 // 数学I の学習コンテンツ
 const math1Lessons: LearningTopic[] = [
     {
@@ -48,7 +106,7 @@ const math1Lessons: LearningTopic[] = [
             多項式の展開は、分配法則を使って式を広げることです。
             因数分解は、展開の逆で、共通因数でくくったり、公式を使ったりして積の形にすることです。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "展開の例",
                         detail: "$(x+2)(x+3) = x^2 + 3x + 2x + 6 = x^2 + 5x + 6$",
@@ -57,7 +115,7 @@ const math1Lessons: LearningTopic[] = [
                         title: "因数分解の例",
                         detail: "$x^2 + 5x + 6 = (x+2)(x+3)$",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：符号ミスや項の漏れ",
                     detail: `
@@ -65,7 +123,7 @@ const math1Lessons: LearningTopic[] = [
               因数分解では、公式を正しく適用できているか、共通因数を見落としていないか注意が必要です。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question: "$(x+3)(x-2)$ を展開しなさい。",
                         answer: "x^2+x-6",
@@ -76,7 +134,7 @@ const math1Lessons: LearningTopic[] = [
                         answer: "(x-2)(x-3)",
                         hint: "掛けて6、足して-5になる2つの数を見つけましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "実数と根号",
@@ -85,16 +143,20 @@ const math1Lessons: LearningTopic[] = [
             根号（ルート）の計算では、$\\sqrt{a}\\sqrt{b} = \\sqrt{ab}$ や $\\frac{\\sqrt{a}}{\\sqrt{b}} = \\sqrt{\\frac{a}{b}}$ などの性質を使います。
             分母の有理化も重要です。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "根号の計算例",
-                        detail: "$\\sqrt{12} = \\sqrt{4 \\times 3} = 2\\sqrt{3}$",
+                        question:
+                            "$\\sqrt{12} = \\sqrt{4 \\times 3} = 2\\sqrt{3}$",
+                        answer: "2\\sqrt{3}",
                     },
                     {
                         title: "分母の有理化の例",
-                        detail: "$\\frac{1}{\\sqrt{2}} = \\frac{1 \\times \\sqrt{2}}{\\sqrt{2} \\times \\sqrt{2}} = \\frac{\\sqrt{2}}{2}$",
+                        question:
+                            "$\\frac{1}{\\sqrt{2}} = \\frac{1 \\times \\sqrt{2}}{\\sqrt{2} \\times \\sqrt{2}} = \\frac{\\sqrt{2}}{2}$",
+                        answer: "\\frac{\\sqrt{2}}{2}",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：根号の足し算・引き算",
                     detail: `
@@ -102,7 +164,7 @@ const math1Lessons: LearningTopic[] = [
               根号の中の数が同じ場合のみ、係数を足し引きできます。例：$2\\sqrt{3} + 4\\sqrt{3} = 6\\sqrt{3}$
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question: "$\\sqrt{18} + \\sqrt{8}$ を簡単にしなさい。",
                         answer: "5sqrt(2)",
@@ -113,7 +175,7 @@ const math1Lessons: LearningTopic[] = [
                         answer: "(sqrt(3)+1)/2",
                         hint: "分母と分子に何を掛ければ良いでしょうか？",
                     },
-                ],
+                ]),
             },
         ],
     },
@@ -126,16 +188,20 @@ const math1Lessons: LearningTopic[] = [
             1次方程式は、$ax+b=0$ の形で表される方程式です。文字を含む項を片側に、定数項をもう片側に集めて解きます。
             1次不等式は、$ax+b>0$ のように不等号で表される式です。方程式と同様に解きますが、負の数を掛けたり割ったりする際には不等号の向きが逆になることに注意が必要です。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "1次方程式の例",
-                        detail: "$2x - 3 = 5 \\Rightarrow 2x = 8 \\Rightarrow x = 4$",
+                        question:
+                            "$2x - 3 = 5 \\Rightarrow 2x = 8 \\Rightarrow x = 4$",
+                        answer: "4",
                     },
                     {
                         title: "1次不等式の例",
-                        detail: "$ -3x < 6 \\Rightarrow x > -2$ （負の数で割ると不等号の向きが逆になる）",
+                        question:
+                            "$ -3x < 6 \\Rightarrow x > -2$ （負の数で割ると不等号の向きが逆になる）",
+                        answer: "-2",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：負の数で割る際の不等号の向き",
                     detail: `
@@ -143,18 +209,18 @@ const math1Lessons: LearningTopic[] = [
               両辺を負の数 $(-2)$ で割るため、不等号の向きが逆になり、$x < -2$ が正解です。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question: "$3x - 5 = 7$ を解きなさい。",
-                        answer: "x=4",
+                        answer: "4",
                         hint: "定数項を右辺に移項しましょう。",
                     },
                     {
                         question: "$2x + 3 < 7$ を解きなさい。",
-                        answer: "x<2",
+                        answer: "<2",
                         hint: "負の数で割る場合に注意しましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "2次方程式",
@@ -163,16 +229,20 @@ const math1Lessons: LearningTopic[] = [
             解き方には、因数分解、平方完成、解の公式 ($x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$) があります。
             判別式 $D = b^2-4ac$ の符号によって、実数解の個数が分かります。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "因数分解の例",
-                        detail: "$x^2 - 4x + 3 = 0 \\Rightarrow (x-1)(x-3) = 0 \\Rightarrow x=1, 3$",
+                        question:
+                            "$x^2 - 4x + 3 = 0 \\Rightarrow (x-1)(x-3) = 0 \\Rightarrow x=1, 3$",
+                        answer: "1, 3",
                     },
                     {
                         title: "解の公式の例",
-                        detail: "$x^2 + x - 1 = 0 \\Rightarrow x = \\frac{-1 \\pm \\sqrt{1^2 - 4(1)(-1)}}{2(1)} = \\frac{-1 \\pm \\sqrt{5}}{2}$",
+                        question:
+                            "$x^2 + x - 1 = 0 \\Rightarrow x = \\frac{-1 \\pm \\sqrt{1^2 - 4(1)(-1)}}{2(1)} = \\frac{-1 \\pm \\sqrt{5}}{2}$",
+                        answer: "(-1±sqrt(5))/2",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：解の公式の符号ミス",
                     detail: `
@@ -180,10 +250,10 @@ const math1Lessons: LearningTopic[] = [
               特に、判別式 $D$ の計算は慎重に行いましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question: "$x^2 - 5x + 6 = 0$ を解きなさい。",
-                        answer: "x=2,3",
+                        answer: "2, 3",
                         hint: "因数分解を試みましょう。",
                     },
                     {
@@ -191,7 +261,7 @@ const math1Lessons: LearningTopic[] = [
                         answer: "-1±sqrt(2)",
                         hint: "解の公式を使いましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "2次不等式",
@@ -200,16 +270,20 @@ const math1Lessons: LearningTopic[] = [
             2次関数のグラフとx軸との位置関係を考えることで解きます。
             下に凸の放物線の場合、$ax^2+bx+c>0$ ならばx軸より上の部分、$ax^2+bx+c<0$ ならばx軸より下の部分に対応します。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "2次不等式の例",
-                        detail: "$x^2 - 4 > 0 \\Rightarrow (x-2)(x+2) > 0 \\Rightarrow x < -2, x > 2$",
+                        question:
+                            "$x^2 - 4 > 0 \\Rightarrow (x-2)(x+2) > 0 \\Rightarrow x < -2, x > 2$",
+                        answer: "-2 < x < 2",
                     },
                     {
                         title: "グラフによる解法",
-                        detail: "2次関数 $y=x^2-4$ のグラフは下に凸で、x軸と $x=-2, 2$ で交わる。$y>0$ となるのは $x<-2$ または $x>2$ の範囲。",
+                        question:
+                            "2次関数 $y=x^2-4$ のグラフは下に凸で、x軸と $x=-2, 2$ で交わる。$y>0$ となるのは $x<-2$ または $x>2$ の範囲。",
+                        answer: "x < -2 or x > 2",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：グラフの概形と不等号の向き",
                     detail: `
@@ -217,7 +291,7 @@ const math1Lessons: LearningTopic[] = [
               不等号の向きと、グラフのどの部分が条件を満たすのかを混同しないようにしましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question: "$x^2 - 4x + 3 > 0$ を解きなさい。",
                         answer: "x<1, x>3",
@@ -228,7 +302,7 @@ const math1Lessons: LearningTopic[] = [
                         answer: "-2<=x<=4",
                         hint: "因数分解して、x軸との交点を見つけましょう。",
                     },
-                ],
+                ]),
             },
         ],
     },
@@ -242,16 +316,20 @@ const math1Lessons: LearningTopic[] = [
             特に $y = a(x-p)^2 + q$ の形（標準形）にすると、頂点が $(p, q)$ であることがすぐに分かります。
             $a > 0$ なら下に凸、$a < 0$ なら上に凸のグラフです。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "標準形の例",
-                        detail: "$y = 2(x-1)^2 + 3$ の頂点は $(1, 3)$ で、下に凸の放物線です。",
+                        question:
+                            "$y = 2(x-1)^2 + 3$ の頂点は $(1, 3)$ で、下に凸の放物線です。",
+                        answer: "(1, 3)",
                     },
                     {
                         title: "平方完成の例",
-                        detail: "$y = x^2 - 6x + 7 = (x-3)^2 - 9 + 7 = (x-3)^2 - 2$。頂点は $(3, -2)$。",
+                        question:
+                            "$y = x^2 - 6x + 7 = (x-3)^2 - 9 + 7 = (x-3)^2 - 2$。頂点は $(3, -2)$。",
+                        answer: "(3, -2)",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：頂点の符号ミス",
                     detail: `
@@ -259,7 +337,7 @@ const math1Lessons: LearningTopic[] = [
               正しくは $(-1, 2)$ です。$(x-p)$ の形に注意しましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "2次関数 $y = (x-3)^2 + 1$ の頂点の座標を求めなさい。",
@@ -272,7 +350,7 @@ const math1Lessons: LearningTopic[] = [
                         answer: "(2,1)",
                         hint: "平方完成して標準形にしましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "2次関数の最大・最小",
@@ -281,16 +359,20 @@ const math1Lessons: LearningTopic[] = [
             定義域に頂点が含まれるか、定義域がどこからどこまでかをしっかり確認することが重要です。
             グラフを描いて視覚的に考えるのが効果的です。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "定義域内の頂点",
-                        detail: "関数 $y = (x-1)^2 + 2$ の $0 \\le x \\le 3$ において、頂点 $(1,2)$ は定義域内。$x=0$ で $y=3$、$x=3$ で $y=6$。よって最大値は6、最小値は2。",
+                        question:
+                            "関数 $y = (x-1)^2 + 2$ の $0 \\le x \\le 3$ において、頂点 $(1,2)$ は定義域内。$x=0$ で $y=3$、$x=3$ で $y=6$。よって最大値は6、最小値は2。",
+                        answer: "最大値: 6, 最小値: 2",
                     },
                     {
                         title: "定義域外の頂点",
-                        detail: "関数 $y = (x-3)^2 + 1$ の $0 \\le x \\le 2$ において、頂点 $(3,1)$ は定義域外。$x=0$ で $y=10$、$x=2$ で $y=2$。よって最大値は10、最小値は2。",
+                        question:
+                            "関数 $y = (x-3)^2 + 1$ の $0 \\le x \\le 2$ において、頂点 $(3,1)$ は定義域外。$x=0$ で $y=10$、$x=2$ で $y=2$。よって最大値は10、最小値は2。",
+                        answer: "最大値: 10, 最小値: 2",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：定義域の考慮不足",
                     detail: `
@@ -298,7 +380,7 @@ const math1Lessons: LearningTopic[] = [
               必ず、定義域の端点での値も計算し、それらと頂点のy座標を比較して、最も大きい値が最大値、最も小さい値が最小値であることを確認しましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "関数 $y = (x-1)^2 + 2$ の $0 \\le x \\le 3$ における最大値と最小値を求めなさい。",
@@ -311,7 +393,7 @@ const math1Lessons: LearningTopic[] = [
                         answer: "5",
                         hint: "上に凸のグラフで、頂点がどこにあるかを確認しましょう。",
                     },
-                ],
+                ]),
             },
         ],
     },
@@ -327,12 +409,14 @@ const math1Lessons: LearningTopic[] = [
             $\\tan \\theta = \\frac{対辺}{隣辺}$
             これらの定義は、直角三角形の形によらず、角度が同じであれば常に一定です。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "定義の例",
-                        detail: "斜辺が5、対辺が3、隣辺が4の直角三角形で、角度が$\\theta$ の場合、$\\sin \\theta = \\frac{3}{5}$, $\\cos \\theta = \\frac{4}{5}$, $\\tan \\theta = \\frac{3}{4}$ となります。",
+                        question:
+                            "斜辺が5、対辺が3、隣辺が4の直角三角形で、角度が$\\theta$ の場合、$\\sin \\theta = \\frac{3}{5}$, $\\cos \\theta = \\frac{4}{5}$, $\\tan \\theta = \\frac{3}{4}$ となります。",
+                        answer: "3/5, 4/5, 3/4",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：辺の対応関係の混同",
                     detail: `
@@ -340,7 +424,7 @@ const math1Lessons: LearningTopic[] = [
               特に、直角三角形の向きが変わると混乱しやすいので注意しましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "直角三角形ABCで、$\\angle C = 90^\\circ$, AB=5, BC=3, CA=4 のとき、$\\sin A$ の値を求めなさい。",
@@ -353,7 +437,7 @@ const math1Lessons: LearningTopic[] = [
                         answer: "3/5",
                         hint: "三平方の定理でACの長さを求め、角度Bから見て隣辺と斜辺を確認しましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "三角比の相互関係",
@@ -364,12 +448,14 @@ const math1Lessons: LearningTopic[] = [
             3. $1 + \\tan^2 \\theta = \\frac{1}{\\cos^2 \\theta}$
             これらの関係を使うと、一つの三角比の値から他の三角比の値を求めることができます。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "相互関係の例",
-                        detail: "$\\sin \\theta = \\frac{3}{5}$ のとき、$\\cos^2 \\theta = 1 - (\\frac{3}{5})^2 = 1 - \\frac{9}{25} = \\frac{16}{25}$。よって $\\cos \\theta = \\frac{4}{5}$ （$\\theta$ が鋭角の場合）。",
+                        question:
+                            "$\\sin \\theta = \\frac{3}{5}$ のとき、$\\cos^2 \\theta = 1 - (\\frac{3}{5})^2 = 1 - \\frac{9}{25} = \\frac{16}{25}$。よって $\\cos \\theta = \\frac{4}{5}$ （$\\theta$ が鋭角の場合）。",
+                        answer: "4/5",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：象限による符号の変化",
                     detail: `
@@ -377,7 +463,7 @@ const math1Lessons: LearningTopic[] = [
               例えば、$\\cos \\theta$ が負になる場合、$\\sin \\theta = \\sqrt{1 - \\cos^2 \\theta}$ ではなく、$\\sin \\theta = \\pm \\sqrt{1 - \\cos^2 \\theta}$ と考える必要があります。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "$\\sin \\theta = \\frac{3}{5}$ のとき、$\\cos \\theta$ の値を求めなさい。（ただし、$0^\\circ < \\theta < 90^\\circ$）",
@@ -390,7 +476,7 @@ const math1Lessons: LearningTopic[] = [
                         answer: "1/sqrt(5)",
                         hint: "$1 + \\tan^2 \\theta = \\frac{1}{\\cos^2 \\theta}$ を使いましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "正弦定理・余弦定理",
@@ -400,16 +486,20 @@ const math1Lessons: LearningTopic[] = [
             余弦定理: $a^2 = b^2 + c^2 - 2bc \\cos A$ （他の辺や角についても同様）
             これらの定理は、直角三角形でない一般的な三角形の辺の長さや角度を求めるのに役立ちます。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "正弦定理の例",
-                        detail: "三角形ABCで、$\\angle A = 30^\\circ$, $a=5$, $\\angle B = 45^\\circ$ のとき、$\\frac{5}{\\sin 30^\\circ} = \\frac{b}{\\sin 45^\\circ} \\Rightarrow b = 5 \\frac{\\sin 45^\\circ}{\\sin 30^\\circ} = 5 \\frac{\\frac{\\sqrt{2}}{2}}{\\frac{1}{2}} = 5\\sqrt{2}$",
+                        question:
+                            "三角形ABCで、$\\angle A = 30^\\circ$, $a=5$, $\\angle B = 45^\\circ$ のとき、$\\frac{5}{\\sin 30^\\circ} = \\frac{b}{\\sin 45^\\circ} \\Rightarrow b = 5 \\frac{\\sin 45^\\circ}{\\sin 30^\\circ} = 5 \\frac{\\frac{\\sqrt{2}}{2}}{\\frac{1}{2}} = 5\\sqrt{2}$",
+                        answer: "5\\sqrt{2}",
                     },
                     {
                         title: "余弦定理の例",
-                        detail: "三角形ABCで、$b=3, c=4, \\angle A = 60^\\circ$ のとき、$a^2 = 3^2 + 4^2 - 2(3)(4)\\cos 60^\\circ = 9 + 16 - 24(\\frac{1}{2}) = 13$。よって $a=\\sqrt{13}$。",
+                        question:
+                            "三角形ABCで、$b=3, c=4, \\angle A = 60^\\circ$ のとき、$a^2 = 3^2 + 4^2 - 2(3)(4)\\cos 60^\\circ = 9 + 16 - 24(\\frac{1}{2}) = 13$。よって $a=\\sqrt{13}$。",
+                        answer: "\\sqrt{13}",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：どの定理を使うべきか判断できない",
                     detail: `
@@ -418,7 +508,7 @@ const math1Lessons: LearningTopic[] = [
               「2辺とその間の角」または「3辺」が分かっている場合は余弦定理を使うことが多いです。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "三角形ABCで、b=4, $\\angle B = 30^\\circ$, $\\angle A = 45^\\circ$ のとき、辺aの長さを求めなさい。",
@@ -431,7 +521,7 @@ const math1Lessons: LearningTopic[] = [
                         answer: "sqrt(19)",
                         hint: "余弦定理を使いましょう。",
                     },
-                ],
+                ]),
             },
         ],
     },
@@ -445,16 +535,20 @@ const math1Lessons: LearningTopic[] = [
             データの散らばりを表す指標には、範囲、四分位範囲、分散、標準偏差があります。
             これらを使うことで、データの全体的な傾向やばらつき具合を把握できます。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "平均値の例",
-                        detail: "データ：1, 2, 3, 4, 5 の平均値は $\\frac{1+2+3+4+5}{5} = 3$ です。",
+                        question:
+                            "データ：1, 2, 3, 4, 5 の平均値は $\\frac{1+2+3+4+5}{5} = 3$ です。",
+                        answer: "3",
                     },
                     {
                         title: "中央値の例",
-                        detail: "データ：2, 5, 3, 8, 2 を小さい順に並べると 2, 2, 3, 5, 8。中央値は真ん中の値の 3 です。",
+                        question:
+                            "データ：2, 5, 3, 8, 2 を小さい順に並べると 2, 2, 3, 5, 8。中央値は真ん中の値の 3 です。",
+                        answer: "3",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：中央値と平均値の使い分け",
                     detail: `
@@ -462,7 +556,7 @@ const math1Lessons: LearningTopic[] = [
               データの特性を理解し、適切な代表値を選ぶことが重要です。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "データ：2, 5, 3, 8, 2 の平均値を求めなさい。",
@@ -475,7 +569,7 @@ const math1Lessons: LearningTopic[] = [
                         answer: "3",
                         hint: "データを小さい順に並べ替えて、真ん中の値を見つけましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "相関関係",
@@ -483,14 +577,17 @@ const math1Lessons: LearningTopic[] = [
             2つのデータの間に、一方が増えると他方も増える（正の相関）、一方が増えると他方が減る（負の相関）、関係がない（無相関）といった傾向があるとき、それらを相関関係と呼びます。
             散布図を描いたり、相関係数を計算したりすることで、相関の強さや向きを調べることができます。
           `,
-                examples: [
-                    { title: "正の相関の例", detail: "勉強時間とテストの点数" },
+                examples: normalizeExamples([
+                    {
+                        title: "正の相関の例",
+                        question: "勉強時間とテストの点数",
+                    },
                     {
                         title: "負の相関の例",
-                        detail: "スマートフォンの使用時間と睡眠時間",
+                        question: "スマートフォンの使用時間と睡眠時間",
                     },
-                    { title: "無相関の例", detail: "身長と好きな食べ物" },
-                ],
+                    { title: "無相関の例", question: "身長と好きな食べ物" },
+                ]),
                 pitfall: {
                     title: "よくある間違い：相関関係と因果関係の混同",
                     detail: `
@@ -498,7 +595,7 @@ const math1Lessons: LearningTopic[] = [
               例えば、「アイスクリームの売上と水難事故の件数に正の相関がある」というデータがあったとしても、アイスクリームが水難事故の原因ではありません。どちらも「気温が高い」という別の要因に影響されているだけです。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "以下の状況で、どのような相関関係が考えられますか？「気温が高くなると、ビールの売上が増える」",
@@ -511,7 +608,7 @@ const math1Lessons: LearningTopic[] = [
                         answer: "負の相関",
                         hint: "一方が増えると、もう一方が減る関係です。",
                     },
-                ],
+                ]),
             },
         ],
     },
@@ -528,16 +625,20 @@ const mathALessons: LearningTopic[] = [
             順列は、異なるn個のものからr個を選んで並べる場合の数で、$P(n,r)$ と書きます。並べる順番が重要です。
             組み合わせは、異なるn個のものからr個を選ぶ場合の数で、$C(n,r)$ と書きます。並べる順番は関係ありません。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "順列の例",
-                        detail: "5人の生徒から3人を選んで1列に並べる場合：$P(5,3) = 5 \\times 4 \\times 3 = 60$ 通り",
+                        question:
+                            "5人の生徒から3人を選んで1列に並べる場合：$P(5,3) = 5 \\times 4 \\times 3 = 60$ 通り",
+                        answer: "60",
                     },
                     {
                         title: "組み合わせの例",
-                        detail: "5人の生徒から3人の委員を選ぶ場合：$C(5,3) = \\frac{5 \\times 4 \\times 3}{3 \\times 2 \\times 1} = 10$ 通り",
+                        question:
+                            "5人の生徒から3人の委員を選ぶ場合：$C(5,3) = \\frac{5 \\times 4 \\times 3}{3 \\times 2 \\times 1} = 10$ 通り",
+                        answer: "10",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：順列と組み合わせの混同",
                     detail: `
@@ -545,7 +646,7 @@ const mathALessons: LearningTopic[] = [
               どちらを使うべきか、慎重に判断しましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "5人の中から3人を選んで1列に並べる方法は何通りありますか？",
@@ -558,7 +659,7 @@ const mathALessons: LearningTopic[] = [
                         answer: "10",
                         hint: "これは組み合わせの計算です。",
                     },
-                ],
+                ]),
             },
             {
                 title: "確率の基本法則",
@@ -566,20 +667,26 @@ const mathALessons: LearningTopic[] = [
             確率は、ある事象が起こる可能性の度合いを表す数値で、$\\frac{事象の数}{全体の事象の数}$ で求められます。
             和の法則（排反事象の場合）、積の法則（独立事象の場合）などを使って計算します。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "確率の例",
-                        detail: "1個のサイコロを投げるとき、1の目が出る確率は $\\frac{1}{6}$ です。",
+                        question:
+                            "1個のサイコロを投げるとき、1の目が出る確率は $\\frac{1}{6}$ です。",
+                        answer: "1/6",
                     },
                     {
                         title: "和の法則の例",
-                        detail: "サイコロで偶数が出る確率（2,4,6）は $\\frac{3}{6} = \\frac{1}{2}$。",
+                        question:
+                            "サイコロで偶数が出る確率（2,4,6）は $\\frac{3}{6} = \\frac{1}{2}$。",
+                        answer: "1/2",
                     },
                     {
                         title: "積の法則の例",
-                        detail: "サイコロを2回投げて、2回とも1の目が出る確率は $\\frac{1}{6} \\times \\frac{1}{6} = \\frac{1}{36}$。",
+                        question:
+                            "サイコロを2回投げて、2回とも1の目が出る確率は $\\frac{1}{6} \\times \\frac{1}{6} = \\frac{1}{36}$。",
+                        answer: "1/36",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：排反事象と独立事象の混同",
                     detail: `
@@ -587,7 +694,7 @@ const mathALessons: LearningTopic[] = [
               それぞれの定義を理解し、適切な法則を適用しないと、確率の計算を間違えてしまいます。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "1個のサイコロを投げるとき、偶数の目が出る確率を求めなさい。",
@@ -600,7 +707,7 @@ const mathALessons: LearningTopic[] = [
                         answer: "9/25",
                         hint: "1回目と2回目は独立な事象です。",
                     },
-                ],
+                ]),
             },
         ],
     },
@@ -614,20 +721,23 @@ const mathALessons: LearningTopic[] = [
             倍数とは、ある数を整数倍したものです。例えば、3の倍数は3, 6, 9, ...です。
             最大公約数（GCD）と最小公倍数（LCM）は、複数の数の共通の約数や倍数の中で最大の、または最小のものです。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "約数の例",
-                        detail: "10の約数は1, 2, 5, 10です。",
+                        question: "10の約数は1, 2, 5, 10です。",
+                        answer: "1, 2, 5, 10",
                     },
                     {
                         title: "倍数の例",
-                        detail: "4の倍数は4, 8, 12, ...です。",
+                        question: "4の倍数は4, 8, 12, ...です。",
+                        answer: "4, 8, 12, ...",
                     },
                     {
                         title: "最大公約数・最小公倍数の例",
-                        detail: "6と9の最大公約数は3、最小公倍数は18です。",
+                        question: "6と9の最大公約数は3、最小公倍数は18です。",
+                        answer: "3, 18",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：素数と合成数の区別",
                     detail: `
@@ -636,7 +746,7 @@ const mathALessons: LearningTopic[] = [
               素因数分解は、約数や倍数を考える上で非常に重要です。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question: "12の正の約数をすべて求めなさい。",
                         answer: "1,2,3,4,6,12",
@@ -647,7 +757,7 @@ const mathALessons: LearningTopic[] = [
                         answer: "4",
                         hint: "共通の約数の中で一番大きいものです。",
                     },
-                ],
+                ]),
             },
             {
                 title: "ユークリッドの互除法",
@@ -656,12 +766,14 @@ const mathALessons: LearningTopic[] = [
             「大きい数を小さい数で割った余り」と「小さい数」の最大公約数が、元の2つの数の最大公約数と等しいという性質を利用します。
             余りが0になるまでこの操作を繰り返すと、その時の割る数が最大公約数になります。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "ユークリッドの互除法の例",
-                        detail: "24と18の最大公約数：\n$24 = 18 \\times 1 + 6$\n$18 = 6 \\times 3 + 0$\nよって、最大公約数は6。",
+                        question:
+                            "24と18の最大公約数：\n$24 = 18 \\times 1 + 6$\n$18 = 6 \\times 3 + 0$\nよって、最大公約数は6。",
+                        answer: "6",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：計算の途中で止めてしまう",
                     detail: `
@@ -670,7 +782,7 @@ const mathALessons: LearningTopic[] = [
               また、余りの計算ミスにも注意しましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "105と30の最大公約数をユークリッドの互除法で求めなさい。",
@@ -683,7 +795,7 @@ const mathALessons: LearningTopic[] = [
                         answer: "18",
                         hint: "計算を繰り返しましょう。",
                     },
-                ],
+                ]),
             },
         ],
     },
@@ -698,20 +810,26 @@ const mathALessons: LearningTopic[] = [
             外心：各辺の垂直二等分線の交点。外接円の中心です。
             内心：各内角の二等分線の交点。内接円の中心です。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "重心の例",
-                        detail: "重心は、三角形の板を指で支えることができる一点です。",
+                        question:
+                            "重心は、三角形の板を指で支えることができる一点です。",
+                        answer: "重心は、三角形の板を指で支えることができる一点です。",
                     },
                     {
                         title: "外心の例",
-                        detail: "外心は、三角形の3つの頂点を通る円（外接円）の中心です。",
+                        question:
+                            "外心は、三角形の3つの頂点を通る円（外接円）の中心です。",
+                        answer: "外心は、三角形の3つの頂点を通る円（外接円）の中心です。",
                     },
                     {
                         title: "内心の例",
-                        detail: "内心は、三角形の3つの辺に接する円（内接円）の中心です。",
+                        question:
+                            "内心は、三角形の3つの辺に接する円（内接円）の中心です。",
+                        answer: "内心は、三角形の3つの辺に接する円（内接円）の中心です。",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：各点の定義の混同",
                     detail: `
@@ -719,7 +837,7 @@ const mathALessons: LearningTopic[] = [
               また、それぞれの点が持つ性質（例：外心から各頂点までの距離は等しい）も正確に覚えましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "三角形の3つの中線が交わる点を何と呼びますか？",
@@ -732,7 +850,7 @@ const mathALessons: LearningTopic[] = [
                         answer: "外心",
                         hint: "各辺の垂直二等分線の交点です。",
                     },
-                ],
+                ]),
             },
             {
                 title: "円の性質 (方べきの定理など)",
@@ -741,12 +859,14 @@ const mathALessons: LearningTopic[] = [
             方べきの定理は、円と直線が交わる点や接する点に関する辺の長さの関係を示す定理です。
             これらの定理は、図形問題で辺の長さや角度を求めるのに役立ちます。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "方べきの定理の例",
-                        detail: "円の外部の点Pから引いた接線PTと、点Pを通る直線が円とA, Bで交わるとき、$PT^2 = PA \\cdot PB$ が成り立ちます。",
+                        question:
+                            "円の外部の点Pから引いた接線PTと、点Pを通る直線が円とA, Bで交わるとき、$PT^2 = PA \\cdot PB$ が成り立ちます。",
+                        answer: "PT^2 = PA・PB",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：定理の適用条件",
                     detail: `
@@ -754,7 +874,7 @@ const mathALessons: LearningTopic[] = [
               それぞれの定理がどのような図形や条件で適用できるのかを正確に理解しておく必要があります。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "点Pから円に引いた接線の接点をT、点Pを通る直線が円と2点A, Bで交わるとき、成り立つ関係式を答えなさい。",
@@ -767,7 +887,7 @@ const mathALessons: LearningTopic[] = [
                         answer: "180度",
                         hint: "円に内接する四角形の性質です。",
                     },
-                ],
+                ]),
             },
         ],
     },
@@ -784,16 +904,20 @@ const math2Lessons: LearningTopic[] = [
             整式の除法は、多項式を多項式で割る計算です。筆算と同様に、割り算の原理「A = BQ + R」が成り立ちます。
             分数式は、分母と分子が多項式である式です。通分や約分、足し算・引き算・掛け算・割り算の計算方法を学びます。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "整式の除法の例",
-                        detail: "$(x^2 + 3x + 2)$ を $(x+1)$ で割ると、商は $x+2$、余りは $0$ です。",
+                        question:
+                            "$(x^2 + 3x + 2)$ を $(x+1)$ で割ると、商は $x+2$、余りは $0$ です。",
+                        answer: "商: x^2-x+2, 余り: 1",
                     },
                     {
                         title: "分数式の計算例",
-                        detail: "$\\frac{1}{x} + \\frac{1}{x+1} = \\frac{x+1}{x(x+1)} + \\frac{x}{x(x+1)} = \\frac{2x+1}{x(x+1)}$",
+                        question:
+                            "$\\frac{1}{x} + \\frac{1}{x+1} = \\frac{x+1}{x(x+1)} + \\frac{x}{x(x+1)} = \\frac{2x+1}{x(x+1)}$",
+                        answer: "2x/(x^2-1)",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：整式の除法の筆算ミス",
                     detail: `
@@ -801,7 +925,7 @@ const math2Lessons: LearningTopic[] = [
               分数式では、通分する際に分母・分子に同じものを掛けること、約分する際に共通因数で割ることなどを忘れないようにしましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "$(x^3 - 2x^2 + 3x - 1)$ を $(x-1)$ で割った商と余りを求めなさい。",
@@ -814,7 +938,7 @@ const math2Lessons: LearningTopic[] = [
                         answer: "2x/(x^2-1)",
                         hint: "通分しましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "恒等式と等式・不等式の証明",
@@ -823,16 +947,20 @@ const math2Lessons: LearningTopic[] = [
             等式の証明には、片方の辺を変形してもう片方の辺と一致させる方法や、両辺をそれぞれ変形して同じ式になることを示す方法があります。
             不等式の証明には、$(A-B) \\ge 0$ を示す方法や、相加平均・相乗平均の関係などを利用する方法があります。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "恒等式の例",
-                        detail: "$x(x+1) = x^2 + x$ は恒等式です。どんなxを代入しても成り立ちます。",
+                        question:
+                            "$x(x+1) = x^2 + x$ は恒等式です。どんなxを代入しても成り立ちます。",
+                        answer: "x(x+1) = x^2 + x",
                     },
                     {
                         title: "不等式の証明例",
-                        detail: "$a^2+b^2 \\ge 2ab$ の証明：$(a-b)^2 \\ge 0$ より $a^2 - 2ab + b^2 \\ge 0 \\Rightarrow a^2+b^2 \\ge 2ab$。",
+                        question:
+                            "$a^2+b^2 \\ge 2ab$ の証明：$(a-b)^2 \\ge 0$ より $a^2 - 2ab + b^2 \\ge 0 \\Rightarrow a^2+b^2 \\ge 2ab$。",
+                        answer: "a^2+b^2 \\ge 2ab",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：恒等式と方程式の混同",
                     detail: `
@@ -841,7 +969,7 @@ const math2Lessons: LearningTopic[] = [
               不等式の証明では、二乗の形や正負の判断が重要になります。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "次の等式が恒等式となるように、定数a, bの値を求めなさい。$(a+b)x + (a-b) = 4x - 2$",
@@ -854,7 +982,7 @@ const math2Lessons: LearningTopic[] = [
                         answer: "証明略",
                         hint: "両辺を二乗して差を考えてみましょう。",
                     },
-                ],
+                ]),
             },
         ],
     },
@@ -868,16 +996,19 @@ const math2Lessons: LearningTopic[] = [
             複素数は $a+bi$ の形で表される数で、a, bは実数です。
             2次方程式の解は、判別式が負の場合でも複素数の範囲で2つの解を持つことになります。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "虚数の例",
-                        detail: "$i^2 = -1$, $i^3 = -i$, $i^4 = 1$",
+                        question: "$i^2 = -1$, $i^3 = -i$, $i^4 = 1$",
+                        answer: "-1, -i, 1",
                     },
                     {
                         title: "複素数の例",
-                        detail: "$x^2 + 4 = 0 \\Rightarrow x^2 = -4 \\Rightarrow x = \\pm 2i$",
+                        question:
+                            "$x^2 + 4 = 0 \\Rightarrow x^2 = -4 \\Rightarrow x = \\pm 2i$",
+                        answer: "\\pm 2i",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：虚数単位の計算ミス",
                     detail: `
@@ -885,18 +1016,18 @@ const math2Lessons: LearningTopic[] = [
               複素数の足し算・引き算は実部と虚部をそれぞれ計算し、掛け算は分配法則で展開してから $i^2 = -1$ を適用します。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
-                        question: "$(2+3i) + (1-i)$ を計算しなさい。",
+                        question: "(2+3i) + (1-i)$ を計算しなさい。",
                         answer: "3+2i",
                         hint: "実部と虚部をそれぞれ足し合わせましょう。",
                     },
                     {
-                        question: "$(1+i)^2$ を計算しなさい。",
+                        question: "(1+i)^2$ を計算しなさい。",
                         answer: "2i",
                         hint: "展開してから $i^2 = -1$ を使いましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "因数定理と高次方程式",
@@ -905,16 +1036,20 @@ const math2Lessons: LearningTopic[] = [
             この定理を使うと、3次以上の高次方程式の解を見つけることができます。
             $P(k)=0$ となる $k$ を見つけたら、$(x-k)$ で $P(x)$ を割り算し、次数を下げて解を求めます。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "因数定理の例",
-                        detail: "$P(x) = x^3 - 7x + 6$ で $P(1) = 1-7+6 = 0$ なので、$P(x)$ は $(x-1)$ を因数に持ちます。",
+                        question:
+                            "$P(x) = x^3 - 7x + 6$ で $P(1) = 1-7+6 = 0$ なので、$P(x)$ は $(x-1)$ を因数に持ちます。",
+                        answer: "x^3 - 7x + 6",
                     },
                     {
                         title: "高次方程式の解法例",
-                        detail: "$x^3 - 7x + 6 = 0$ の解は、$x=1$ を見つけ、$x^3 - 7x + 6 = (x-1)(x^2+x-6) = (x-1)(x-2)(x+3) = 0$ より $x=1, 2, -3$。",
+                        question:
+                            "$x^3 - 7x + 6 = 0$ の解は、$x=1$ を見つけ、$x^3 - 7x + 6 = (x-1)(x^2+x-6) = (x-1)(x-2)(x+3) = 0$ より $x=1, 2, -3$。",
+                        answer: "(x-1)(x-2)(x+3)",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：試行錯誤の範囲",
                     detail: `
@@ -922,7 +1057,7 @@ const math2Lessons: LearningTopic[] = [
               例えば、$x^3 + ax^2 + bx + c = 0$ の場合、$c$ の約数（正負両方）を試してみましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "多項式 $P(x) = x^3 - 2x^2 - 5x + 6$ が $x-1$ で割り切れるか調べなさい。",
@@ -935,7 +1070,7 @@ const math2Lessons: LearningTopic[] = [
                         answer: "x=-1,2(重解)",
                         hint: "定数項4の約数から解を探し、因数分解しましょう。",
                     },
-                ],
+                ]),
             },
         ],
     },
@@ -949,16 +1084,20 @@ const math2Lessons: LearningTopic[] = [
             2点 $(x_1, y_1)$, $(x_2, y_2)$ 間の距離は $\\sqrt{(x_2-x_1)^2 + (y_2-y_1)^2}$ です。
             直線の方程式には、$y = mx+n$ （傾きm、y切片n）や $y-y_1 = m(x-x_1)$ （点$(x_1, y_1)$ を通り傾きm）などがあります。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "2点間の距離の例",
-                        detail: "点A$(1,2)$ と点B$(4,6)$ の距離は $\\sqrt{(4-1)^2 + (6-2)^2} = \\sqrt{3^2 + 4^2} = \\sqrt{9+16} = \\sqrt{25} = 5$ です。",
+                        question:
+                            "点A$(1,2)$ と点B$(4,6)$ の距離は $\\sqrt{(4-1)^2 + (6-2)^2} = \\sqrt{3^2 + 4^2} = \\sqrt{9+16} = \\sqrt{25} = 5$ です。",
+                        answer: "5",
                     },
                     {
                         title: "直線の方程式の例",
-                        detail: "点$(1,2)$ を通り、傾きが3の直線は $y-2 = 3(x-1) \\Rightarrow y = 3x - 3 + 2 \\Rightarrow y = 3x - 1$ です。",
+                        question:
+                            "点$(1,2)$ を通り、傾きが3の直線は $y-2 = 3(x-1) \\Rightarrow y = 3x - 3 + 2 \\Rightarrow y = 3x - 1$ です。",
+                        answer: "y = 3x - 1",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：傾きの計算ミス",
                     detail: `
@@ -967,7 +1106,7 @@ const math2Lessons: LearningTopic[] = [
               また、垂直な2直線の傾きの積は $-1$ になる性質も重要です。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "点A$(1,2)$ と点B$(4,6)$ の間の距離を求めなさい。",
@@ -980,7 +1119,7 @@ const math2Lessons: LearningTopic[] = [
                         answer: "y=-2x+7",
                         hint: "点と傾きが分かっている直線の方程式の形を思い出しましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "円の方程式",
@@ -989,16 +1128,20 @@ const math2Lessons: LearningTopic[] = [
             これは、円周上の任意の点 $(x, y)$ と中心との距離が常に半径 $r$ であるという定義から導かれます。
             一般形 $x^2+y^2+lx+my+n=0$ を平方完成して中心と半径を求めることもできます。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "標準形の例",
-                        detail: "中心 $(2, -3)$、半径 $5$ の円の方程式は $(x-2)^2 + (y+3)^2 = 5^2 = 25$ です。",
+                        question:
+                            "中心 $(2, -3)$、半径 $5$ の円の方程式は $(x-2)^2 + (y+3)^2 = 5^2 = 25$ です。",
+                        answer: "(x-2)^2+(y+3)^2=25",
                     },
                     {
                         title: "一般形から標準形への変換例",
-                        detail: "$x^2 + y^2 - 4x + 6y - 3 = 0 \\Rightarrow (x^2-4x) + (y^2+6y) = 3 \\Rightarrow (x-2)^2 - 4 + (y+3)^2 - 9 = 3 \\Rightarrow (x-2)^2 + (y+3)^2 = 16$。中心は $(2, -3)$、半径は $4$。",
+                        question:
+                            "$x^2 + y^2 - 4x + 6y - 3 = 0 \\Rightarrow (x^2-4x) + (y^2+6y) = 3 \\Rightarrow (x-2)^2 - 4 + (y+3)^2 - 9 = 3 \\Rightarrow (x-2)^2 + (y+3)^2 = 16$。中心は $(2, -3)$、半径は $4$。",
+                        answer: "(x-2)^2+(y+3)^2=16",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：半径の二乗を忘れる",
                     detail: `
@@ -1007,7 +1150,7 @@ const math2Lessons: LearningTopic[] = [
               また、中心の座標の符号ミスにも注意しましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "中心が $(1, -2)$、半径が $4$ の円の方程式を求めなさい。",
@@ -1020,7 +1163,7 @@ const math2Lessons: LearningTopic[] = [
                         answer: "中心:(3,-1), 半径:2",
                         hint: "平方完成して標準形に変形しましょう。",
                     },
-                ],
+                ]),
             },
         ],
     },
@@ -1033,16 +1176,20 @@ const math2Lessons: LearningTopic[] = [
             三角関数 $\\sin \\theta$, $\\cos \\theta$, $\\tan \\theta$ は、単位円上の点の座標や傾きで定義されます。
             これらの関数は周期的なグラフを持ちます。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "単位円での定義",
-                        detail: "単位円上の点P$(x,y)$ と原点Oを結ぶ線分OPがx軸の正の向きとなす角を$\\theta$ とすると、$x = \\cos \\theta$, $y = \\sin \\theta$, 傾きが $\\tan \\theta$ となります。",
+                        question:
+                            "単位円上の点P$(x,y)$ と原点Oを結ぶ線分OPがx軸の正の向きとなす角を$\\theta$ とすると、$x = \\cos \\theta$, $y = \\sin \\theta$, 傾きが $\\tan \\theta$ となります。",
+                        answer: "x = cos θ, y = sin θ, 傾き = tan θ",
                     },
                     {
                         title: "グラフの周期",
-                        detail: "$y = \\sin x$ と $y = \\cos x$ の周期は $2\\pi$（または$360^\\circ$）、$y = \\tan x$ の周期は $\\pi$（または$180^\\circ$）です。",
+                        question:
+                            "$y = \\sin x$ と $y = \\cos x$ の周期は $2\\pi$（または$360^\\circ$）、$y = \\tan x$ の周期は $\\pi$（または$180^\\circ$）です。",
+                        answer: "2π, π",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：符号の取り違え",
                     detail: `
@@ -1050,7 +1197,7 @@ const math2Lessons: LearningTopic[] = [
               これを間違えると、計算結果が大きく変わってしまいます。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question: "$\\sin(\\frac{\\pi}{2})$ の値を求めなさい。",
                         answer: "1",
@@ -1061,7 +1208,7 @@ const math2Lessons: LearningTopic[] = [
                         answer: "2π",
                         hint: "グラフが繰り返される最小の区間です。",
                     },
-                ],
+                ]),
             },
             {
                 title: "加法定理",
@@ -1072,12 +1219,14 @@ const math2Lessons: LearningTopic[] = [
             $\\tan(\\alpha + \\beta) = \\frac{\\tan \\alpha + \\tan \\beta}{1 - \\tan \\alpha \\tan \\beta}$
             これらの公式は、倍角の公式や半角の公式の導出にも使われます。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "加法定理の適用例",
-                        detail: "$\\sin(75^\\circ) = \\sin(45^\\circ + 30^\\circ) = \\sin 45^\\circ \\cos 30^\\circ + \\cos 45^\\circ \\sin 30^\\circ = \\frac{\\sqrt{2}}{2} \\cdot \\frac{\\sqrt{3}}{2} + \\frac{\\sqrt{2}}{2} \\cdot \\frac{1}{2} = \\frac{\\sqrt{6} + \\sqrt{2}}{4}$",
+                        question:
+                            "$\\sin(75^\\circ) = \\sin(45^\\circ + 30^\\circ) = \\sin 45^\\circ \\cos 30^\\circ + \\cos 45^\\circ \\sin 30^\\circ = \\frac{\\sqrt{2}}{2} \\cdot \\frac{\\sqrt{3}}{2} + \\frac{\\sqrt{2}}{2} \\cdot \\frac{1}{2} = \\frac{\\sqrt{6} + \\sqrt{2}}{4}$",
+                        answer: "sin(75°) = (√6 + √2)/4",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：符号や関数の混同",
                     detail: `
@@ -1085,7 +1234,7 @@ const math2Lessons: LearningTopic[] = [
               語呂合わせ（例：「咲いたコスモス、コスモス咲いた」）などを活用して正確に覚えましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "$\\sin(75^\\circ)$ の値を求めなさい。（ヒント：$75^\\circ = 45^\\circ + 30^\\circ$）",
@@ -1098,7 +1247,7 @@ const math2Lessons: LearningTopic[] = [
                         answer: "(sqrt(6)+sqrt(2))/4",
                         hint: "$\\cos(\\alpha - \\beta)$ の公式を使います。",
                     },
-                ],
+                ]),
             },
         ],
     },
@@ -1112,16 +1261,19 @@ const math2Lessons: LearningTopic[] = [
             指数法則（$a^m a^n = a^{m+n}$, $(a^m)^n = a^{mn}$ など）を使って計算します。
             グラフは、$a>1$ のとき増加関数、$0<a<1$ のとき減少関数となります。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "指数法則の例",
-                        detail: "$2^3 \\times 2^4 = 2^{3+4} = 2^7 = 128$",
+                        question: "$2^3 \\times 2^4 = 2^{3+4} = 2^7 = 128$",
+                        answer: "128",
                     },
                     {
                         title: "グラフの例",
-                        detail: "$y=2^x$ は増加関数、$y=(\\frac{1}{2})^x$ は減少関数です。",
+                        question:
+                            "$y=2^x$ は増加関数、$y=(\\frac{1}{2})^x$ は減少関数です。",
+                        answer: "y=2^x, y=(1/2)^x",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：指数法則の適用ミス",
                     detail: `
@@ -1129,7 +1281,7 @@ const math2Lessons: LearningTopic[] = [
               また、負の指数 ($a^{-n} = \\frac{1}{a^n}$) や分数指数 ($a^{\\frac{1}{n}} = \\sqrt[n]{a}$) の計算も重要です。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question: "$2^3 \\times 2^4$ を計算しなさい。",
                         answer: "128",
@@ -1140,7 +1292,7 @@ const math2Lessons: LearningTopic[] = [
                         answer: "729",
                         hint: "指数法則 $(a^m)^n = a^{mn}$ を使いましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "対数関数",
@@ -1149,16 +1301,19 @@ const math2Lessons: LearningTopic[] = [
             対数法則（$\\log_a MN = \\log_a M + \\log_a N$, $\\log_a M^k = k \\log_a M$ など）を使って計算します。
             底の変換公式も重要です。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "対数の定義の例",
-                        detail: "$\\log_2 8 = 3$ は $2^3 = 8$ を意味します。",
+                        question: "$\\log_2 8 = 3$ は $2^3 = 8$ を意味します。",
+                        answer: "3",
                     },
                     {
                         title: "対数法則の例",
-                        detail: "$\\log_{10} 2 + \\log_{10} 5 = \\log_{10} (2 \\times 5) = \\log_{10} 10 = 1$",
+                        question:
+                            "$\\log_{10} 2 + \\log_{10} 5 = \\log_{10} (2 \\times 5) = \\log_{10} 10 = 1$",
+                        answer: "1",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：対数の定義と法則の混同",
                     detail: `
@@ -1166,7 +1321,7 @@ const math2Lessons: LearningTopic[] = [
               対数法則の適用も、足し算が掛け算に、引き算が割り算になるなど、指数法則と逆の関係にあることを意識しましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question: "$\\log_2 8$ の値を求めなさい。",
                         answer: "3",
@@ -1178,7 +1333,7 @@ const math2Lessons: LearningTopic[] = [
                         answer: "1",
                         hint: "対数法則 $\\log_a M + \\log_a N = \\log_a MN$ を使いましょう。",
                     },
-                ],
+                ]),
             },
         ],
     },
@@ -1192,13 +1347,14 @@ const math2Lessons: LearningTopic[] = [
             基本的な微分公式 $(x^n)' = nx^{n-1}$ や定数、和・差の微分公式を使って計算します。
             導関数は、元の関数の各点での接線の傾きを表す関数です。
           `,
-                examples: [
-                    { title: "導関数の例", detail: "$(x^3)' = 3x^2$" },
+                examples: normalizeExamples([
+                    { title: "導関数の例", question: "$(x^3)' = 3x^2$" },
                     {
                         title: "複数の項の微分例",
-                        detail: "$(x^2 - 4x + 5)' = 2x - 4$",
+                        question: "$(x^2 - 4x + 5)' = 2x - 4$",
+                        answer: "2x - 4",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：定数項の微分",
                     detail: `
@@ -1206,7 +1362,7 @@ const math2Lessons: LearningTopic[] = [
               これを $1$ と間違えてしまうことが多いので注意しましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "関数 $f(x) = x^3 - 4x^2 + 2x - 1$ を微分しなさい。",
@@ -1218,7 +1374,7 @@ const math2Lessons: LearningTopic[] = [
                         answer: "10x",
                         hint: "定数項の微分に注意しましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "接線の方程式 (多項式)",
@@ -1227,12 +1383,14 @@ const math2Lessons: LearningTopic[] = [
             $y - f(a) = f'(a)(x - a)$ で与えられます。
             まず導関数 $f'(x)$ を求め、次に点 $a$ での微分係数 $f'(a)$ を計算し、最後に方程式の形にまとめます。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "接線の方程式の例",
-                        detail: "$y = x^2$ の $x=1$ における接線。\n$f'(x) = 2x$ なので $f'(1) = 2$。\n点 $(1, f(1)) = (1, 1)$ を通るので、$y - 1 = 2(x - 1) \\Rightarrow y = 2x - 1$。",
+                        question:
+                            "$y = x^2$ の $x=1$ における接線。\n$f'(x) = 2x$ なので $f'(1) = 2$。\n点 $(1, f(1)) = (1, 1)$ を通るので、$y - 1 = 2(x - 1) \\Rightarrow y = 2x - 1$。",
+                        answer: "y = 2x - 1",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：接線の傾きと方程式の混同",
                     detail: `
@@ -1240,7 +1398,7 @@ const math2Lessons: LearningTopic[] = [
               方程式を求める際には、点 $(a, f(a))$ も利用して、直線の式を完成させる必要があります。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "関数 $y = x^2 + 2x$ の $x=1$ における接線の方程式を求めなさい。",
@@ -1253,7 +1411,7 @@ const math2Lessons: LearningTopic[] = [
                         answer: "y=-3x",
                         hint: "同様に$f'(x)$と$f'(0)$を求め、点$(0, f(0))$を通る直線を考えましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "不定積分 (基本的な多項式)",
@@ -1262,16 +1420,18 @@ const math2Lessons: LearningTopic[] = [
             不定積分の基本公式 $\\int x^n dx = \\frac{1}{n+1}x^{n+1} + C$ を使って計算します。
             $C$ は積分定数で、必ずつけ忘れないようにしましょう。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "不定積分の例",
-                        detail: "$\\int x^2 dx = \\frac{1}{3}x^3 + C$",
+                        question: "$\\int x^2 dx = \\frac{1}{3}x^3 + C$",
+                        answer: "x^3/3 + C",
                     },
                     {
                         title: "複数の項の積分例",
-                        detail: "$\\int (3x^2 + 2x) dx = x^3 + x^2 + C$",
+                        question: "$\\int (3x^2 + 2x) dx = x^3 + x^2 + C$",
+                        answer: "x^3 + x^2 + C",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：積分定数Cの忘れ",
                     detail: `
@@ -1279,7 +1439,7 @@ const math2Lessons: LearningTopic[] = [
               これは、微分すると定数が消えてしまうため、元の関数にどのような定数があったか分からないからです。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question: "$\\int (2x + 3) dx$ を求めなさい。",
                         answer: "x^2+3x+C",
@@ -1290,7 +1450,7 @@ const math2Lessons: LearningTopic[] = [
                         answer: "1/3 x^3 - 5/2 x^2 + 4x + C",
                         hint: "それぞれの項の指数に1を足し、その数で割りましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "定積分と面積 (多項式)",
@@ -1299,16 +1459,20 @@ const math2Lessons: LearningTopic[] = [
             $\\int_a^b f(x) dx = [F(x)]_a^b = F(b) - F(a)$ で計算します。
             面積を求める場合は、x軸より下の部分の積分値が負になるため、絶対値を取るか、符号を反転させる必要があります。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "定積分の例",
-                        detail: "$\\int_0^1 x^2 dx = [\\frac{1}{3}x^3]_0^1 = \\frac{1}{3}(1)^3 - \\frac{1}{3}(0)^3 = \\frac{1}{3}$",
+                        question:
+                            "$\\int_0^1 x^2 dx = [\\frac{1}{3}x^3]_0^1 = \\frac{1}{3}(1)^3 - \\frac{1}{3}(0)^3 = \\frac{1}{3}$",
+                        answer: "1/3",
                     },
                     {
                         title: "面積の例",
-                        detail: "曲線 $y = x^2 - 1$ と $x$軸で囲まれた部分の面積は、$\\int_{-1}^1 |x^2 - 1| dx = \\int_{-1}^1 -(x^2 - 1) dx = \\int_{-1}^1 (1 - x^2) dx = [x - \\frac{1}{3}x^3]_{-1}^1 = (1 - \\frac{1}{3}) - (-1 + \\frac{1}{3}) = \\frac{2}{3} - (-\\frac{2}{3}) = \\frac{4}{3}$",
+                        question:
+                            "曲線 $y = x^2 - 1$ と $x$軸で囲まれた部分の面積は、$\\int_{-1}^1 |x^2 - 1| dx = \\int_{-1}^1 -(x^2 - 1) dx = \\int_{-1}^1 (1 - x^2) dx = [x - \\frac{1}{3}x^3]_{-1}^1 = (1 - \\frac{1}{3}) - (-1 + \\frac{1}{3}) = \\frac{2}{3} - (-\\frac{2}{3}) = \\frac{4}{3}$",
+                        answer: "4/3",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：x軸より下の面積の符号",
                     detail: `
@@ -1316,7 +1480,7 @@ const math2Lessons: LearningTopic[] = [
               この場合、その区間の定積分の値に絶対値をつけるか、$-f(x)$ を積分するようにしましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question: "$\\int_0^2 (x^2) dx$ を計算しなさい。",
                         answer: "8/3",
@@ -1328,7 +1492,7 @@ const math2Lessons: LearningTopic[] = [
                         answer: "4/3",
                         hint: "x軸との交点を求め、その区間で積分します。x軸より下の部分の符号に注意。",
                     },
-                ],
+                ]),
             },
         ],
     },
@@ -1345,16 +1509,20 @@ const mathBLessons: LearningTopic[] = [
             等差数列は、隣り合う項の差が一定（公差）の数列です。一般項は $a_n = a_1 + (n-1)d$ です。
             等比数列は、隣り合う項の比が一定（公比）の数列です。一般項は $a_n = a_1 r^{n-1}$ です。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "等差数列の例",
-                        detail: "数列：1, 3, 5, 7, ... は、公差 $d=2$ の等差数列です。第n項は $a_n = 1 + (n-1)2 = 2n-1$。",
+                        question:
+                            "数列：1, 3, 5, 7, ... は、公差 $d=2$ の等差数列です。第n項は $a_n = 1 + (n-1)2 = 2n-1$。",
+                        answer: "2n-1",
                     },
                     {
                         title: "等比数列の例",
-                        detail: "数列：2, 6, 18, 54, ... は、公比 $r=3$ の等比数列です。第n項は $a_n = 2 \\cdot 3^{n-1}$。",
+                        question:
+                            "数列：2, 6, 18, 54, ... は、公比 $r=3$ の等比数列です。第n項は $a_n = 2 \\cdot 3^{n-1}$。",
+                        answer: "2 \\cdot 3^{n-1}",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：一般項の公式の混同",
                     detail: `
@@ -1362,7 +1530,7 @@ const mathBLessons: LearningTopic[] = [
               特に、等比数列の公比 $r$ の指数が $n-1$ であることを忘れないようにしましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question: "初項3、公差2の等差数列の第5項を求めなさい。",
                         answer: "11",
@@ -1373,7 +1541,7 @@ const mathBLessons: LearningTopic[] = [
                         answer: "54",
                         hint: "等比数列の一般項の公式に当てはめましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "数列の和 (Σ記号)",
@@ -1383,16 +1551,20 @@ const mathBLessons: LearningTopic[] = [
             等比数列の和の公式：$S_n = \\frac{a_1(r^n - 1)}{r-1}$ （$r \\neq 1$ のとき）
             Σ記号の計算では、公式や性質を正しく適用することが重要です。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "等差数列の和の例",
-                        detail: "初項1、公差2の等差数列の初項から第5項までの和：$S_5 = \\frac{5(2 \\cdot 1 + (5-1)2)}{2} = \\frac{5(2+8)}{2} = 25$",
+                        question:
+                            "初項1、公差2の等差数列の初項から第5項までの和：$S_5 = \\frac{5(2 \\cdot 1 + (5-1)2)}{2} = \\frac{5(2+8)}{2} = 25$",
+                        answer: "25",
                     },
                     {
                         title: "Σ記号の例",
-                        detail: "$\\sum_{k=1}^{3} k^2 = 1^2 + 2^2 + 3^2 = 1 + 4 + 9 = 14$",
+                        question:
+                            "$\\sum_{k=1}^{3} k^2 = 1^2 + 2^2 + 3^2 = 1 + 4 + 9 = 14$",
+                        answer: "14",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：Σ記号の範囲と変数",
                     detail: `
@@ -1400,7 +1572,7 @@ const mathBLessons: LearningTopic[] = [
               また、Σ記号の右にある式が、どの変数（例：$k$）に依存しているかを確認し、それ以外の文字は定数として扱うことに注意しましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "初項1、末項10、項数10の等差数列の和を求めなさい。",
@@ -1412,7 +1584,7 @@ const mathBLessons: LearningTopic[] = [
                         answer: "n(n+1)/2",
                         hint: "自然数の和の公式です。",
                     },
-                ],
+                ]),
             },
             {
                 title: "漸化式",
@@ -1421,16 +1593,20 @@ const mathBLessons: LearningTopic[] = [
             例えば、等差数列は $a_{n+1} = a_n + d$、等比数列は $a_{n+1} = r a_n$ と表せます。
             漸化式を解くことで、数列の一般項を求めることができます。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "等差数列の漸化式と一般項",
-                        detail: "$a_1 = 1, a_{n+1} = a_n + 2$ のとき、一般項は $a_n = 2n-1$ です。",
+                        question:
+                            "$a_1 = 1, a_{n+1} = a_n + 2$ のとき、一般項は $a_n = 2n-1$ です。",
+                        answer: "2n-1",
                     },
                     {
                         title: "等比数列の漸化式と一般項",
-                        detail: "$a_1 = 3, a_{n+1} = 4a_n$ のとき、一般項は $a_n = 3 \\cdot 4^{n-1}$ です。",
+                        question:
+                            "$a_1 = 3, a_{n+1} = 4a_n$ のとき、一般項は $a_n = 3 \\cdot 4^{n-1}$ です。",
+                        answer: "3 \\cdot 4^{n-1}",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：漸化式のタイプの見分け方",
                     detail: `
@@ -1438,7 +1614,7 @@ const mathBLessons: LearningTopic[] = [
               与えられた漸化式がどのタイプに当てはまるかを見分け、適切な解法を適用することが重要です。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "$a_1 = 1, a_{n+1} = a_n + 3$ で定義される数列の一般項 $a_n$ を求めなさい。",
@@ -1451,7 +1627,7 @@ const mathBLessons: LearningTopic[] = [
                         answer: "2^n",
                         hint: "これは等比数列の漸化式です。",
                     },
-                ],
+                ]),
             },
         ],
     },
@@ -1466,16 +1642,20 @@ const mathBLessons: LearningTopic[] = [
             実数倍は、ベクトルの大きさを変えたり、向きを反転させたりします。
             成分表示されたベクトルは、各成分ごとに足し算や実数倍の計算を行います。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "ベクトルの足し算の例",
-                        detail: "$\\vec{a} = (1, 2)$, $\\vec{b} = (3, 1)$ のとき、$\\vec{a} + \\vec{b} = (1+3, 2+1) = (4, 3)$",
+                        question:
+                            "$\\vec{a} = (1, 2)$, $\\vec{b} = (3, 1)$ のとき、$\\vec{a} + \\vec{b} = (1+3, 2+1) = (4, 3)$",
+                        answer: "(4, 3)",
                     },
                     {
                         title: "実数倍の例",
-                        detail: "$\\vec{a} = (2, -1)$ のとき、$2\\vec{a} = (2 \\times 2, 2 \\times (-1)) = (4, -2)$",
+                        question:
+                            "$\\vec{a} = (2, -1)$ のとき、$2\\vec{a} = (2 \\times 2, 2 \\times (-1)) = (4, -2)$",
+                        answer: "(4, -2)",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：ベクトルの足し算と引き算の向き",
                     detail: `
@@ -1484,7 +1664,7 @@ const mathBLessons: LearningTopic[] = [
               図で確認しながら、向きを間違えないようにしましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "$\\vec{a} = (2, 1)$, $\\vec{b} = (3, -2)$ のとき、$\\vec{a} + \\vec{b}$ を求めなさい。",
@@ -1497,7 +1677,7 @@ const mathBLessons: LearningTopic[] = [
                         answer: "(3,12)",
                         hint: "各成分を3倍しましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "平面ベクトル",
@@ -1507,16 +1687,20 @@ const mathBLessons: LearningTopic[] = [
             $\\vec{a} \\cdot \\vec{b} = |\\vec{a}||\\vec{b}|\\cos \\theta$ または 成分で $\\vec{a} \\cdot \\vec{b} = a_x b_x + a_y b_y$ です。
             内積が0ならば、2つのベクトルは垂直です。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "内積の計算例",
-                        detail: "$\\vec{a} = (1, 2)$, $\\vec{b} = (3, -1)$ のとき、$\\vec{a} \\cdot \\vec{b} = 1 \\times 3 + 2 \\times (-1) = 3 - 2 = 1$",
+                        question:
+                            "$\\vec{a} = (1, 2)$, $\\vec{b} = (3, -1)$ のとき、$\\vec{a} \\cdot \\vec{b} = 1 \\times 3 + 2 \\times (-1) = 3 - 2 = 1$",
+                        answer: "1",
                     },
                     {
                         title: "垂直条件の例",
-                        detail: "$\\vec{a} = (2, 1)$, $\\vec{b} = (-1, 2)$ のとき、$\\vec{a} \\cdot \\vec{b} = 2(-1) + 1(2) = -2 + 2 = 0$ なので、$\\vec{a}$ と $\\vec{b}$ は垂直です。",
+                        question:
+                            "$\\vec{a} = (2, 1)$, $\\vec{b} = (-1, 2)$ のとき、$\\vec{a} \\cdot \\vec{b} = 2(-1) + 1(2) = -2 + 2 = 0$ なので、$\\vec{a}$ と $\\vec{b}$ は垂直です。",
+                        answer: "0",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：内積とベクトルの積",
                     detail: `
@@ -1524,7 +1708,7 @@ const mathBLessons: LearningTopic[] = [
               ベクトルの積には、内積の他に外積（高校数学では扱わない）がありますが、混同しないようにしましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "$\\vec{a} = (1, 2)$, $\\vec{b} = (3, -1)$ のとき、内積 $\\vec{a} \\cdot \\vec{b}$ を求めなさい。",
@@ -1534,10 +1718,10 @@ const mathBLessons: LearningTopic[] = [
                     {
                         question:
                             "2つのベクトル $\\vec{a} = (2, k)$, $\\vec{b} = (3, 6)$ が垂直であるとき、定数kの値を求めなさい。",
-                        answer: "k=-1",
+                        answer: "-1",
                         hint: "内積が0になる条件を使いましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "空間ベクトル",
@@ -1547,16 +1731,20 @@ const mathBLessons: LearningTopic[] = [
             成分表示は $(x, y, z)$ のように3つの成分を持ちます。
             空間座標における点や直線の位置関係をベクトルで表現できます。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "空間ベクトルの足し算の例",
-                        detail: "$\\vec{a} = (1, 2, 3)$, $\\vec{b} = (4, -1, 0)$ のとき、$\\vec{a} + \\vec{b} = (1+4, 2-1, 3+0) = (5, 1, 3)$",
+                        question:
+                            "$\\vec{a} = (1, 2, 3)$, $\\vec{b} = (4, -1, 0)$ のとき、$\\vec{a} + \\vec{b} = (1+4, 2-1, 3+0) = (5, 1, 3)$",
+                        answer: "(5, 1, 3)",
                     },
                     {
                         title: "空間ベクトルの大きさの例",
-                        detail: "$\\vec{a} = (1, -2, 2)$ のとき、大きさ $|\\vec{a}| = \\sqrt{1^2 + (-2)^2 + 2^2} = \\sqrt{1+4+4} = \\sqrt{9} = 3$",
+                        question:
+                            "$\\vec{a} = (1, -2, 2)$ のとき、大きさ $|\\vec{a}| = \\sqrt{1^2 + (-2)^2 + 2^2} = \\sqrt{1+4+4} = \\sqrt{9} = 3$",
+                        answer: "3",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：空間のイメージ不足",
                     detail: `
@@ -1564,7 +1752,7 @@ const mathBLessons: LearningTopic[] = [
               特に、図形的な問題を解く際には、座標軸を意識した図を描く練習をしましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "点A$(1,2,3)$ と点B$(4,0,1)$ のとき、ベクトル $\\vec{AB}$ の成分を求めなさい。",
@@ -1577,7 +1765,7 @@ const mathBLessons: LearningTopic[] = [
                         answer: "sqrt(6)",
                         hint: "各成分の二乗の和の平方根です。",
                     },
-                ],
+                ]),
             },
         ],
     },
@@ -1595,16 +1783,19 @@ const math3Lessons: LearningTopic[] = [
             複素数平面（ガウス平面）は、横軸を実軸、縦軸を虚軸として複素数を点で表した平面です。
             複素数の加減算は、複素数平面上ではベクトルの合成のように考えることができます。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "複素数の加算例",
-                        detail: "$(2+3i) + (1-i) = (2+1) + (3-1)i = 3+2i$",
+                        question: "$(2+3i) + (1-i) = (2+1) + (3-1)i = 3+2i$",
+                        answer: "3+2i",
                     },
                     {
                         title: "複素数平面での表示",
-                        detail: "複素数 $2+i$ は、複素数平面上で点 $(2,1)$ に対応します。",
+                        question:
+                            "複素数 $2+i$ は、複素数平面上で点 $(2,1)$ に対応します。",
+                        answer: "(2,1)",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：虚数と複素数の混同",
                     detail: `
@@ -1613,7 +1804,7 @@ const math3Lessons: LearningTopic[] = [
               複素数平面上での点の位置と、その複素数の実部・虚部の対応を正確に理解しましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "複素数 $3+4i$ を複素数平面上に図示しなさい。",
@@ -1626,7 +1817,7 @@ const math3Lessons: LearningTopic[] = [
                         answer: "2",
                         hint: "原点からの距離です。三平方の定理を使いましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "ド・モアブルの定理",
@@ -1635,16 +1826,20 @@ const math3Lessons: LearningTopic[] = [
             $z^n = r^n (\\cos n\\theta + i \\sin n\\theta)$ という関係が成り立ちます。これがド・モアブルの定理です。
             この定理を使うと、複素数の累乗や、複素数の方程式の解を簡単に求めることができます。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "ド・モアブルの定理の適用例",
-                        detail: "$z = \\cos(\\frac{\\pi}{3}) + i \\sin(\\frac{\\pi}{3})$ のとき、$z^2 = \\cos(\\frac{2\\pi}{3}) + i \\sin(\\frac{2\\pi}{3})$",
+                        question:
+                            "$z = \\cos(\\frac{\\pi}{3}) + i \\sin(\\frac{\\pi}{3})$ のとき、$z^2 = \\cos(\\frac{2\\pi}{3}) + i \\sin(\\frac{2\\pi}{3})$",
+                        answer: "cos(2θ)+isin(2θ)",
                     },
                     {
                         title: "累乗の計算例",
-                        detail: "$(1+i)^2$ を極形式で考えると、$1+i = \\sqrt{2}(\\cos(\\frac{\\pi}{4}) + i \\sin(\\frac{\\pi}{4}))$。よって $(1+i)^2 = (\\sqrt{2})^2 (\\cos(\\frac{2\\pi}{4}) + i \\sin(\\frac{2\\pi}{4})) = 2(\\cos(\\frac{\\pi}{2}) + i \\sin(\\frac{\\pi}{2})) = 2(0+i) = 2i$",
+                        question:
+                            "$(1+i)^2$ を極形式で考えると、$1+i = \\sqrt{2}(\\cos(\\frac{\\pi}{4}) + i \\sin(\\frac{\\pi}{4}))$。よって $(1+i)^2 = (\\sqrt{2})^2 (\\cos(\\frac{2\\pi}{4}) + i \\sin(\\frac{2\\pi}{4})) = 2(\\cos(\\frac{\\pi}{2}) + i \\sin(\\frac{\\pi}{2})) = 2(0+i) = 2i$",
+                        answer: "2i",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：角度の計算ミス",
                     detail: `
@@ -1653,7 +1848,7 @@ const math3Lessons: LearningTopic[] = [
               また、極形式への変換を正確に行うことが前提となります。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "$(\\cos \\theta + i \\sin \\theta)^3$ を計算しなさい。",
@@ -1665,7 +1860,7 @@ const math3Lessons: LearningTopic[] = [
                         answer: "-4",
                         hint: "まず $1+i$ を極形式に直し、その後ド・モアブルの定理を適用しましょう。",
                     },
-                ],
+                ]),
             },
         ],
     },
@@ -1678,16 +1873,20 @@ const math3Lessons: LearningTopic[] = [
             数学IIIでは、分数関数 ($y = \\frac{P(x)}{Q(x)}$)、無理関数 ($y = \\sqrt{f(x)}$)、指数関数、対数関数、三角関数など、様々な種類の関数を学びます。
             それぞれの関数の定義域、値域、グラフの概形、漸近線などを理解することが重要です。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "分数関数の例",
-                        detail: "$y = \\frac{1}{x}$ の定義域は $x \\neq 0$、漸近線は $x=0, y=0$ です。",
+                        question:
+                            "$y = \\frac{1}{x}$ の定義域は $x \\neq 0$、漸近線は $x=0, y=0$ です。",
+                        answer: "x ≠ 0, x=0, y=0",
                     },
                     {
                         title: "無理関数の例",
-                        detail: "$y = \\sqrt{x}$ の定義域は $x \\ge 0$、値域は $y \\ge 0$ です。",
+                        question:
+                            "$y = \\sqrt{x}$ の定義域は $x \\ge 0$、値域は $y \\ge 0$ です。",
+                        answer: "x ≧ 0, y ≧ 0",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：定義域の確認不足",
                     detail: `
@@ -1695,7 +1894,7 @@ const math3Lessons: LearningTopic[] = [
               これらの定義域を正確に把握しないと、グラフを描いたり、極限や微分を計算する際に間違いが生じます。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "関数 $y = \\frac{1}{x-2}$ の漸近線を求めなさい。",
@@ -1708,7 +1907,7 @@ const math3Lessons: LearningTopic[] = [
                         answer: "x>=-1",
                         hint: "根号の中は負にならないという条件を考えましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "逆関数と合成関数",
@@ -1716,16 +1915,20 @@ const math3Lessons: LearningTopic[] = [
             逆関数は、元の関数のxとyの役割を入れ替えた関数です。$y=f(x)$ の逆関数は $x=f(y)$ をyについて解いたものです。記号では $f^{-1}(x)$ と書きます。
             合成関数は、ある関数の結果を別の関数の入力として使う関数です。$f(g(x))$ や $g(f(x))$ のように表されます。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "逆関数の例",
-                        detail: "$y = x+1$ の逆関数は、$x = y+1 \\Rightarrow y = x-1$ です。",
+                        question:
+                            "$y = x+1$ の逆関数は、$x = y+1 \\Rightarrow y = x-1$ です。",
+                        answer: "y = x-1",
                     },
                     {
                         title: "合成関数の例",
-                        detail: "$f(x) = x^2$, $g(x) = x+1$ のとき、$f(g(x)) = f(x+1) = (x+1)^2 = x^2+2x+1$ です。",
+                        question:
+                            "$f(x) = x^2$, $g(x) = x+1$ のとき、$f(g(x)) = f(x+1) = (x+1)^2 = x^2+2x+1$ です。",
+                        answer: "x^2+2x+1",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：逆関数の存在条件",
                     detail: `
@@ -1734,7 +1937,7 @@ const math3Lessons: LearningTopic[] = [
               合成関数の順序も重要で、$f(g(x))$ と $g(f(x))$ は一般に異なります。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question: "関数 $y = 2x - 1$ の逆関数を求めなさい。",
                         answer: "y=1/2x+1/2",
@@ -1746,7 +1949,7 @@ const math3Lessons: LearningTopic[] = [
                         answer: "x^2+1",
                         hint: "$g(x)$ を $f(x)$ のxに代入しましょう。",
                     },
-                ],
+                ]),
             },
         ],
     },
@@ -1759,12 +1962,14 @@ const math3Lessons: LearningTopic[] = [
             極限とは、関数がある値に限りなく近づくときの関数の値の振る舞いを表すものです。例えば、$x$が2に近づくとき、$x+1$は3に近づきます。これを$\\lim_{x \\to 2} (x+1) = 3$と表記します。
             「限りなく近づく」というのは、その値そのものになるわけではない、という点が重要です。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "極限の例",
-                        detail: "関数 $f(x) = x+1$ において、xが2に限りなく近づくとき、f(x)は3に限りなく近づきます。$\\lim_{x \\to 2} (x+1) = 3$",
+                        question:
+                            "関数 $f(x) = x+1$ において、xが2に限りなく近づくとき、f(x)は3に限りなく近づきます。$\\lim_{x \\to 2} (x+1) = 3$",
+                        answer: "3",
                     },
-                ],
+                ]),
                 pitfall: {
                     // よくある間違いのセクション
                     title: "よくある間違い：極限と代入を混同する",
@@ -1775,7 +1980,7 @@ const math3Lessons: LearningTopic[] = [
               これは、$x$が0に限りなく近づくとき、関数$\\frac{x^2}{x}$の値は0に限りなく近づく、という意味です。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     // 練習問題
                     {
                         question:
@@ -1789,7 +1994,7 @@ const math3Lessons: LearningTopic[] = [
                         answer: "5",
                         hint: "これも単純な代入で解けます。",
                     },
-                ],
+                ]),
             },
             {
                 title: "極限の計算（多項式関数）",
@@ -1797,16 +2002,20 @@ const math3Lessons: LearningTopic[] = [
             多項式関数の極限は、基本的に$x$が近づく値を関数に代入することで求められます。
             例えば、$\\lim_{x \\to a} P(x) = P(a)$ となります。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "有限値への極限",
-                        detail: "$\\lim_{x \\to 2} (x^2 + 3x - 1) = 2^2 + 3(2) - 1 = 4 + 6 - 1 = 9$",
+                        question:
+                            "$\\lim_{x \\to 2} (x^2 + 3x - 1) = 2^2 + 3(2) - 1 = 4 + 6 - 1 = 9$",
+                        answer: "9",
                     },
                     {
                         title: "無限大への極限",
-                        detail: "$\\lim_{x \\to \\infty} (x^3 - 2x) = \\infty$ （最高次の項 $x^3$ の振る舞いを考える）",
+                        question:
+                            "$\\lim_{x \\to \\infty} (x^3 - 2x) = \\infty$ （最高次の項 $x^3$ の振る舞いを考える）",
+                        answer: "∞", // 無限大は文字列として扱う
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：無限大の扱い",
                     detail: `
@@ -1815,7 +2024,7 @@ const math3Lessons: LearningTopic[] = [
               最高次の項に注目するのがポイントです。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "$\\lim_{x \\to -2} (x^3 + 3x - 5)$ の値を求めなさい。",
@@ -1828,7 +2037,7 @@ const math3Lessons: LearningTopic[] = [
                         answer: "∞", // 無限大は文字列として扱う
                         hint: "最高次の項の振る舞いを考えると良いでしょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "極限の計算（分数関数）",
@@ -1836,16 +2045,20 @@ const math3Lessons: LearningTopic[] = [
             分数関数の極限では、分母が0になる場合に注意が必要です。
             分母が0になる場合、因数分解や有理化などの操作で式を簡略化してから極限を計算します。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "約分による例",
-                        detail: "$\\lim_{x \\to 1} \\frac{x^2 - 1}{x - 1} = \\lim_{x \\to 1} \\frac{(x-1)(x+1)}{x-1} = \\lim_{x \\to 1} (x+1) = 1+1 = 2$",
+                        question:
+                            "$\\lim_{x \\to 1} \\frac{x^2 - 1}{x - 1} = \\lim_{x \\to 1} \\frac{(x-1)(x+1)}{x-1} = \\lim_{x \\to 1} (x+1) = 1+1 = 2$",
+                        answer: "2",
                     },
                     {
                         title: "有理化による例",
-                        detail: "$\\lim_{x \\to 0} \\frac{\\sqrt{x+1} - 1}{x} = \\lim_{x \\to 0} \\frac{(\\sqrt{x+1} - 1)(\\sqrt{x+1} + 1)}{x(\\sqrt{x+1} + 1)} = \\lim_{x \\to 0} \\frac{x+1 - 1}{x(\\sqrt{x+1} + 1)} = \\lim_{x \\to 0} \\frac{x}{x(\\sqrt{x+1} + 1)} = \\lim_{x \\to 0} \\frac{1}{\\sqrt{x+1} + 1} = \\frac{1}{1+1} = \\frac{1}{2}$",
+                        question:
+                            "$\\lim_{x \\to 0} \\frac{\\sqrt{x+1} - 1}{x} = \\lim_{x \\to 0} \\frac{(\\sqrt{x+1} - 1)(\\sqrt{x+1} + 1)}{x(\\sqrt{x+1} + 1)} = \\lim_{x \\to 0} \\frac{x+1 - 1}{x(\\sqrt{x+1} + 1)} = \\lim_{x \\to 0} \\frac{x}{x(\\sqrt{x+1} + 1)} = \\lim_{x \\to 0} \\frac{1}{\\sqrt{x+1} + 1} = \\frac{1}{1+1} = \\frac{1}{2}$",
+                        answer: "1/2",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：約分せずに代入する",
                     detail: `
@@ -1854,7 +2067,7 @@ const math3Lessons: LearningTopic[] = [
               したがって、$\\lim_{x \\to 2} (x+2) = 4$となります。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "$\\lim_{x \\to 1} \\frac{x^2 - 1}{x - 1}$ の値を求めなさい。",
@@ -1867,7 +2080,7 @@ const math3Lessons: LearningTopic[] = [
                         answer: "0.5",
                         hint: "分母の有理化を試みてください。",
                     },
-                ],
+                ]),
             },
             {
                 title: "関数の連続性",
@@ -1878,16 +2091,20 @@ const math3Lessons: LearningTopic[] = [
             3. $\\lim_{x \\to a} f(x) = f(a)$ である。
             簡単に言えば、グラフが途切れていない状態です。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "連続な関数の例",
-                        detail: "多項式関数 $f(x) = x^2+1$ は全ての点で連続です。",
+                        question:
+                            "多項式関数 $f(x) = x^2+1$ は全ての点で連続です。",
+                        answer: "x^2+1",
                     },
                     {
                         title: "不連続な関数の例",
-                        detail: "関数 $f(x) = \\frac{1}{x}$ は $x=0$ で定義されないため不連続です。",
+                        question:
+                            "関数 $f(x) = \\frac{1}{x}$ は $x=0$ で定義されないため不連続です。",
+                        answer: "1/x",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：グラフが途切れていれば不連続",
                     detail: `
@@ -1896,7 +2113,7 @@ const math3Lessons: LearningTopic[] = [
               穴が開いているグラフや、ジャンプしているグラフは不連続です。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "関数 $f(x) = \\begin{cases} x+2 & (x \\neq 1) \\\\ 5 & (x = 1) \\end{cases}$ は $x=1$ で連続ですか？",
@@ -1909,7 +2126,7 @@ const math3Lessons: LearningTopic[] = [
                         answer: "連続",
                         hint: "多項式関数は常に連続であることを思い出してください。",
                     },
-                ],
+                ]),
             },
         ],
     },
@@ -1924,12 +2141,14 @@ const math3Lessons: LearningTopic[] = [
             関数$f(x)$の$x=a$における微分係数は、$\\lim_{h \\to 0} \\frac{f(a+h) - f(a)}{h}$ で定義されます。
             そして、この微分係数を$x$の関数として一般化したものが「導関数」で、$f'(x)$と書きます。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "微分の定義の例",
-                        detail: "$f(x) = x^2$ の導関数：\n$\\lim_{h \\to 0} \\frac{(x+h)^2 - x^2}{h} = \\lim_{h \\to 0} \\frac{x^2 + 2xh + h^2 - x^2}{h} = \\lim_{h \\to 0} \\frac{2xh + h^2}{h} = \\lim_{h \\to 0} (2x + h) = 2x$",
+                        question:
+                            "$f(x) = x^2$ の導関数：\n$\\lim_{h \\to 0} \\frac{(x+h)^2 - x^2}{h} = \\lim_{h \\to 0} \\frac{x^2 + 2xh + h^2 - x^2}{h} = \\lim_{h \\to 0} \\frac{2xh + h^2}{h} = \\lim_{h \\to 0} (2x + h) = 2x$",
+                        answer: "2x",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：微分係数と導関数の違い",
                     detail: `
@@ -1938,7 +2157,7 @@ const math3Lessons: LearningTopic[] = [
               混同しないように注意しましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "関数 $f(x) = x^2$ の導関数を定義に基づいて求めなさい。",
@@ -1951,7 +2170,7 @@ const math3Lessons: LearningTopic[] = [
                         answer: "3",
                         hint: "微分の定義式を使います。直線の傾きを考えても良いでしょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "基本的な微分公式",
@@ -1963,13 +2182,14 @@ const math3Lessons: LearningTopic[] = [
             4. 和・差の微分: $(f(x) \\pm g(x))' = f'(x) \\pm g'(x)$
             これらの公式を組み合わせることで、多くの関数を微分できます。
           `,
-                examples: [
-                    { title: "微分公式の例", detail: "$(x^4)' = 4x^3$" },
+                examples: normalizeExamples([
+                    { title: "微分公式の例", question: "$(x^4)' = 4x^3$" },
                     {
                         title: "複数の項の微分例",
-                        detail: "$(5x^3 - 2x^2 + 7)' = 15x^2 - 4x$",
+                        question: "$(5x^3 - 2x^2 + 7)' = 15x^2 - 4x$",
+                        answer: "15x^2 - 4x",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：定数の微分を1にしてしまう",
                     detail: `
@@ -1978,7 +2198,7 @@ const math3Lessons: LearningTopic[] = [
               $5$を$1$にしてしまう間違いが多いので注意しましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question: "関数 $f(x) = 4x^3$ を微分しなさい。",
                         answer: "12x^2",
@@ -1990,7 +2210,7 @@ const math3Lessons: LearningTopic[] = [
                         answer: "5x^4 - 4x",
                         hint: "それぞれの項を個別に微分し、和・差の公式を適用しましょう。定数の微分に注意。",
                     },
-                ],
+                ]),
             },
             {
                 title: "接線の傾き",
@@ -1998,12 +2218,14 @@ const math3Lessons: LearningTopic[] = [
             関数$y=f(x)$上の点$(a, f(a))$における接線の傾きは、その点での導関数の値、$f'(a)$で与えられます。
             つまり、導関数を求めてから$x=a$を代入すれば、接線の傾きがわかります。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "接線の傾きの例",
-                        detail: "$f(x) = x^3$ の $x=2$ における接線の傾き。\n$f'(x) = 3x^2$ なので、$f'(2) = 3(2^2) = 12$。",
+                        question:
+                            "$f(x) = x^3$ の $x=2$ における接線の傾き。\n$f'(x) = 3x^2$ なので、$f'(2) = 3(2^2) = 12$。",
+                        answer: "12",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：接線の傾きと接線の方程式を混同する",
                     detail: `
@@ -2012,7 +2234,7 @@ const math3Lessons: LearningTopic[] = [
               問題が「傾き」を求めているのか、「方程式」を求めているのか、よく確認しましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "関数 $f(x) = x^2 + 3x$ の $x=1$ における接線の傾きを求めなさい。",
@@ -2025,7 +2247,7 @@ const math3Lessons: LearningTopic[] = [
                         answer: "6",
                         hint: "同様に$g'(x)$を求めてから$x=-1$を代入します。",
                     },
-                ],
+                ]),
             },
             {
                 title: "積の微分・商の微分",
@@ -2035,16 +2257,20 @@ const math3Lessons: LearningTopic[] = [
             商の微分公式: $\\left(\\frac{f(x)}{g(x)}\\right)' = \\frac{f'(x)g(x) - f(x)g'(x)}{(g(x))^2}$
             これらの公式は少し複雑ですが、慣れると非常に便利です。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "積の微分の例",
-                        detail: "$((x^2+1)(x-2))' = (2x)(x-2) + (x^2+1)(1) = 2x^2 - 4x + x^2 + 1 = 3x^2 - 4x + 1$",
+                        question:
+                            "$((x^2+1)(x-2))' = (2x)(x-2) + (x^2+1)(1) = 2x^2 - 4x + x^2 + 1 = 3x^2 - 4x + 1$",
+                        answer: "3x^2 - 4x + 1",
                     },
                     {
                         title: "商の微分の例",
-                        detail: "$\\left(\\frac{x}{x+1}\\right)' = \\frac{(1)(x+1) - (x)(1)}{(x+1)^2} = \\frac{x+1 - x}{(x+1)^2} = \\frac{1}{(x+1)^2}$",
+                        question:
+                            "$\\left(\\frac{x}{x+1}\\right)' = \\frac{(1)(x+1) - (x)(1)}{(x+1)^2} = \\frac{x+1 - x}{(x+1)^2} = \\frac{1}{(x+1)^2}$",
+                        answer: "1/(x+1)^2",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：積の微分で単純にそれぞれを微分してしまう",
                     detail: `
@@ -2053,7 +2279,7 @@ const math3Lessons: LearningTopic[] = [
               商の微分公式では、分子と分母の役割を間違えたり、分母を二乗し忘れたりすることに注意しましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "関数 $f(x) = (x^2+1)(3x-2)$ を微分しなさい。",
@@ -2066,7 +2292,7 @@ const math3Lessons: LearningTopic[] = [
                         answer: "1/(x+1)^2",
                         hint: "商の微分公式 $\\left(\\frac{f}{g}\\right)' = \\frac{f'g - fg'}{g^2}$ を使います。",
                     },
-                ],
+                ]),
             },
             {
                 title: "合成関数の微分",
@@ -2075,16 +2301,20 @@ const math3Lessons: LearningTopic[] = [
             $(f(g(x)))' = f'(g(x)) \\cdot g'(x)$
             つまり、「外側の関数を微分したもの」に「内側の関数を微分したもの」を掛け合わせます。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "合成関数の微分の例",
-                        detail: "$((2x+3)^4)' = 4(2x+3)^3 \\cdot (2x+3)' = 4(2x+3)^3 \\cdot 2 = 8(2x+3)^3$",
+                        question:
+                            "$((2x+3)^4)' = 4(2x+3)^3 \\cdot (2x+3)' = 4(2x+3)^3 \\cdot 2 = 8(2x+3)^3$",
+                        answer: "8(2x+3)^3",
                     },
                     {
                         title: "別の例",
-                        detail: "$(\\sin(x^2))' = \\cos(x^2) \\cdot (x^2)' = 2x \\cos(x^2)$",
+                        question:
+                            "$(\\sin(x^2))' = \\cos(x^2) \\cdot (x^2)' = 2x \\cos(x^2)$",
+                        answer: "2x cos(x^2)",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：内側の関数の微分を掛け忘れる",
                     detail: `
@@ -2094,7 +2324,7 @@ const math3Lessons: LearningTopic[] = [
               内側の関数の微分を掛け忘れないように注意しましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question: "関数 $f(x) = (3x-2)^4$ を微分しなさい。",
                         answer: "12(3x-2)^3",
@@ -2106,7 +2336,7 @@ const math3Lessons: LearningTopic[] = [
                         answer: "x/sqrt(x^2+1)",
                         hint: "$\\sqrt{u}$ の微分は $\\frac{1}{2\\sqrt{u}}$ で、これに内側の関数 $x^2+1$ の微分を掛けます。",
                     },
-                ],
+                ]),
             },
             {
                 title: "高次導関数",
@@ -2115,12 +2345,14 @@ const math3Lessons: LearningTopic[] = [
             $f(x)$ の導関数を $f'(x)$、第二導関数を $f''(x)$、$f'''(x)$、一般に $f^{(n)}(x)$ と表記します。
             これらの導関数は、関数の増減や凹凸、変曲点などを調べるのに役立ちます。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "高次導関数の例",
-                        detail: "$f(x) = x^4$\n$f'(x) = 4x^3$\n$f''(x) = 12x^2$\n$f'''(x) = 24x$",
+                        question:
+                            "$f(x) = x^4$\n$f'(x) = 4x^3$\n$f''(x) = 12x^2$\n$f'''(x) = 24x$",
+                        answer: "4x^3, 12x^2, 24x",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：計算ミスを繰り返す",
                     detail: `
@@ -2129,7 +2361,7 @@ const math3Lessons: LearningTopic[] = [
               特に符号や指数に注意しましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "関数 $f(x) = x^4 - 3x^2 + 5$ の第二導関数 $f''(x)$ を求めなさい。",
@@ -2142,7 +2374,7 @@ const math3Lessons: LearningTopic[] = [
                         answer: "-4sin(2x)",
                         hint: "合成関数の微分も考慮しながら、2回微分してみましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "増減・凹凸とグラフ",
@@ -2152,16 +2384,20 @@ const math3Lessons: LearningTopic[] = [
             $f''(x)=0$ となる点で凹凸が変化する場合、その点を変曲点と呼びます。
             これらの情報を使って、関数のグラフの概形を描くことができます。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "増減の例",
-                        detail: "$f(x) = x^3 - 3x$ のとき、$f'(x) = 3x^2 - 3 = 3(x-1)(x+1)$。\n$x < -1$ で $f'(x)>0$ (増加)、$-1 < x < 1$ で $f'(x)<0$ (減少)、$x > 1$ で $f'(x)>0$ (増加)。",
+                        question:
+                            "$f(x) = x^3 - 3x$ のとき、$f'(x) = 3x^2 - 3 = 3(x-1)(x+1)$。\n$x < -1$ で $f'(x)>0$ (増加)、$-1 < x < 1$ で $f'(x)<0$ (減少)、$x > 1$ で $f'(x)>0$ (増加)。",
+                        answer: "3x^2 - 3 = 3(x-1)(x+1)",
                     },
                     {
                         title: "凹凸の例",
-                        detail: "$f(x) = x^3 - 3x$ のとき、$f''(x) = 6x$。\n$x < 0$ で $f''(x)<0$ (上に凸)、$x > 0$ で $f''(x)>0$ (下に凸)。$x=0$ で変曲点。",
+                        question:
+                            "$f(x) = x^3 - 3x$ のとき、$f''(x) = 6x$。\n$x < 0$ で $f''(x)<0$ (上に凸)、$x > 0$ で $f''(x)>0$ (下に凸)。$x=0$ で変曲点。",
+                        answer: "6x",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：増減と凹凸の混同",
                     detail: `
@@ -2170,7 +2406,7 @@ const math3Lessons: LearningTopic[] = [
               それぞれの導関数が何を表しているのかをしっかりと理解しましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "関数 $f(x) = x^3 - 3x$ の増減を調べ、極値を求めなさい。",
@@ -2183,7 +2419,7 @@ const math3Lessons: LearningTopic[] = [
                         answer: "x=0で変曲点(0,0), x=2で変曲点(2,-16)",
                         hint: "$f''(x)$ を計算し、その符号の変化を調べましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "最大・最小",
@@ -2194,12 +2430,14 @@ const math3Lessons: LearningTopic[] = [
             2. 定義域の端点 $f(a)$、$f(b)$ の値を計算する。
             3. これらの値の中で最も大きいものが最大値、最も小さいものが最小値です。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "最大・最小の例",
-                        detail: "$f(x) = x^2$ の閉区間 $[-2, 1]$ における最大・最小。\n$f'(x)=2x=0 \\Rightarrow x=0$ (極小値 $f(0)=0$)\n端点：$f(-2)=4, f(1)=1$。\nよって、最大値は4 ($x=-2$)、最小値は0 ($x=0$)。",
+                        question:
+                            "$f(x) = x^2$ の閉区間 $[-2, 1]$ における最大・最小。\n$f'(x)=2x=0 \\Rightarrow x=0$ (極小値 $f(0)=0$)\n端点：$f(-2)=4, f(1)=1$。\nよって、最大値は4 ($x=-2$)、最小値は0 ($x=0$)。",
+                        answer: "最大値: 4, 最小値: 0",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：端点の値を考慮し忘れる",
                     detail: `
@@ -2208,7 +2446,7 @@ const math3Lessons: LearningTopic[] = [
               必ず、極値と端点の両方を比較するようにしましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "関数 $f(x) = x^3 - 3x^2 + 2$ の閉区間 $[-1, 3]$ における最大値と最小値を求めなさい。",
@@ -2221,7 +2459,7 @@ const math3Lessons: LearningTopic[] = [
                         answer: "4",
                         hint: "相加平均・相乗平均の関係を使うか、$g'(x)$ を調べて増減表を書きましょう。",
                     },
-                ],
+                ]),
             },
         ],
     },
@@ -2236,16 +2474,19 @@ const math3Lessons: LearningTopic[] = [
             不定積分の基本公式: $\\int x^n dx = \\frac{1}{n+1}x^{n+1} + C$ （ただし、$n \\neq -1$）
             $C$ は積分定数と呼ばれ、任意の定数です。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "不定積分の例",
-                        detail: "$\\int x^3 dx = \\frac{1}{4}x^4 + C$",
+                        question: "$\\int x^3 dx = \\frac{1}{4}x^4 + C$",
+                        answer: "x^4/4 + C",
                     },
                     {
                         title: "複数の項の積分例",
-                        detail: "$\\int (2x^2 - 3x + 1) dx = \\frac{2}{3}x^3 - \\frac{3}{2}x^2 + x + C$",
+                        question:
+                            "$\\int (2x^2 - 3x + 1) dx = \\frac{2}{3}x^3 - \\frac{3}{2}x^2 + x + C$",
+                        answer: "2/3 x^3 - 3/2 x^2 + x + C",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：積分定数Cを忘れる",
                     detail: `
@@ -2255,7 +2496,7 @@ const math3Lessons: LearningTopic[] = [
               したがって、$\\int 2x dx = x^2 + C$ となります。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question: "$\\int (3x^2 - 2x + 1) dx$ を求めなさい。",
                         answer: "x^3 - x^2 + x + C",
@@ -2267,7 +2508,7 @@ const math3Lessons: LearningTopic[] = [
                         answer: "2/3 x^(3/2) - 1/x + C",
                         hint: "$\\sqrt{x} = x^{\\frac{1}{2}}$、$\\frac{1}{x^2} = x^{-2}$ と指数表記に直してから積分公式を使いましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "置換積分法",
@@ -2276,12 +2517,14 @@ const math3Lessons: LearningTopic[] = [
             例えば、$\\int f(g(x))g'(x) dx$ のような形の場合、$u = g(x)$ と置くと $du = g'(x) dx$ となり、
             $\\int f(u) du$ の形に変換できます。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "置換積分の例",
-                        detail: "$\\int 2x(x^2+1)^3 dx$ のとき、$u = x^2+1$ と置くと $du = 2x dx$。\nよって $\\int u^3 du = \\frac{1}{4}u^4 + C = \\frac{1}{4}(x^2+1)^4 + C$",
+                        question:
+                            "$\\int 2x(x^2+1)^3 dx$ のとき、$u = x^2+1$ と置くと $du = 2x dx$。\nよって $\\int u^3 du = \\frac{1}{4}u^4 + C = \\frac{1}{4}(x^2+1)^4 + C$",
+                        answer: "1/4 (x^2+1)^4 + C",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：dxの変換を忘れる、定積分の場合は積分範囲を変え忘れる",
                     detail: `
@@ -2290,7 +2533,7 @@ const math3Lessons: LearningTopic[] = [
               また、定積分の場合は、変数を $x$ から $u$ に変えたら、積分範囲も $x$ の範囲から $u$ の範囲に変換する必要があります。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question: "$\\int (2x+1)^3 dx$ を求めなさい。",
                         answer: "1/8 (2x+1)^4 + C",
@@ -2301,7 +2544,7 @@ const math3Lessons: LearningTopic[] = [
                         answer: "1/3 (x^2+1)^(3/2) + C",
                         hint: "$u = x^2+1$ と置いてみましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "部分積分法",
@@ -2311,12 +2554,14 @@ const math3Lessons: LearningTopic[] = [
             この公式を使うには、$f(x)$ と $g'(x)$ を適切に選ぶことが重要です。
             一般的には、微分すると簡単になる関数を $f(x)$、積分しやすい関数を $g'(x)$ に選びます。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "部分積分の例",
-                        detail: "$\\int x \\cos x dx$\n$f(x)=x, g'(x)=\\cos x$ とすると $f'(x)=1, g(x)=\\sin x$。\n$\\int x \\cos x dx = x \\sin x - \\int 1 \\cdot \\sin x dx = x \\sin x - (-\\cos x) + C = x \\sin x + \\cos x + C$",
+                        question:
+                            "$\\int x \\cos x dx$\n$f(x)=x, g'(x)=\\cos x$ とすると $f'(x)=1, g(x)=\\sin x$。\n$\\int x \\cos x dx = x \\sin x - \\int 1 \\cdot \\sin x dx = x \\sin x - (-\\cos x) + C = x \\sin x + \\cos x + C$",
+                        answer: "x sin x + cos x + C",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：f(x)とg'(x)の選び方を間違える",
                     detail: `
@@ -2326,7 +2571,7 @@ const math3Lessons: LearningTopic[] = [
               「ロガリズミック（対数関数）、インバース（逆三角関数）、アルジェブライック（多項式）、トリゴノメトリック（三角関数）、エクスポネンシャル（指数関数）」の順で $f(x)$ を選ぶと良いとされています（Liateの法則）。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question: "$\\int x e^x dx$ を求めなさい。",
                         answer: "xe^x - e^x + C",
@@ -2337,7 +2582,7 @@ const math3Lessons: LearningTopic[] = [
                         answer: "-x cos x + sin x + C",
                         hint: "$f(x) = x$, $g'(x) = \\sin x$ と置いて部分積分公式を適用しましょう。",
                     },
-                ],
+                ]),
             },
             {
                 title: "定積分の概念と計算",
@@ -2347,12 +2592,14 @@ const math3Lessons: LearningTopic[] = [
             $\\int_a^b f(x) dx = [F(x)]_a^b = F(b) - F(a)$
             ここで $F(x)$ は $f(x)$ の原始関数です。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "定積分の例",
-                        detail: "$\\int_1^2 x^2 dx = [\\frac{1}{3}x^3]_1^2 = \\frac{1}{3}(2^3) - \\frac{1}{3}(1^3) = \\frac{8}{3} - \\frac{1}{3} = \\frac{7}{3}$",
+                        question:
+                            "$\\int_1^2 x^2 dx = [\\frac{1}{3}x^3]_1^2 = \\frac{1}{3}(2^3) - \\frac{1}{3}(1^3) = \\frac{8}{3} - \\frac{1}{3} = \\frac{7}{3}$",
+                        answer: "7/3",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：計算ミスや符号ミス",
                     detail: `
@@ -2360,7 +2607,7 @@ const math3Lessons: LearningTopic[] = [
               特に、原始関数を求めた後に代入する値を間違えたり、引き算の際に括弧を付け忘れたりしないように注意しましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question: "$\\int_0^1 (x^2 + 1) dx$ を計算しなさい。",
                         answer: "4/3",
@@ -2371,7 +2618,7 @@ const math3Lessons: LearningTopic[] = [
                         answer: "2",
                         hint: "不定積分を求めてから、$[F(x)]_1^2 = F(2) - F(1)$ を計算します。",
                     },
-                ],
+                ]),
             },
             {
                 title: "面積",
@@ -2381,16 +2628,20 @@ const math3Lessons: LearningTopic[] = [
             面積を求める場合は、常に正の値になるように絶対値を取ったり、区間を分けたりする必要があります。
             2つの曲線 $y=f(x)$ と $y=g(x)$ で囲まれた面積は、$\\int_a^b |f(x) - g(x)| dx$ で求められます。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "面積の例",
-                        detail: "曲線 $y = x^2$ と $x$軸、直線 $x=1$ で囲まれた面積は $\\int_0^1 x^2 dx = \\frac{1}{3}$",
+                        question:
+                            "曲線 $y = x^2$ と $x$軸、直線 $x=1$ で囲まれた面積は $\\int_0^1 x^2 dx = \\frac{1}{3}$",
+                        answer: "1/3",
                     },
                     {
                         title: "x軸より下の面積",
-                        detail: "曲線 $y = x^2 - 1$ と $x$軸で囲まれた部分の面積は、区間 $[-1, 1]$ で $y \\le 0$ なので、$\\int_{-1}^1 -(x^2 - 1) dx = \\frac{4}{3}$",
+                        question:
+                            "曲線 $y = x^2 - 1$ と $x$軸で囲まれた部分の面積は、区間 $[-1, 1]$ で $y \\le 0$ なので、$\\int_{-1}^1 -(x^2 - 1) dx = \\frac{4}{3}$",
+                        answer: "4/3",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：x軸より下の部分の符号を考慮しない",
                     detail: `
@@ -2399,7 +2650,7 @@ const math3Lessons: LearningTopic[] = [
               また、複数の曲線で囲まれる場合は、どちらの関数が上にあるかを区間ごとに確認しましょう。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "曲線 $y = x^2 - 1$ と $x$軸で囲まれた部分の面積を求めなさい。",
@@ -2412,7 +2663,7 @@ const math3Lessons: LearningTopic[] = [
                         answer: "9/2",
                         hint: "2つの曲線の交点を求め、どちらの関数が上にあるかを確認して積分します。",
                     },
-                ],
+                ]),
             },
             {
                 title: "体積",
@@ -2422,12 +2673,14 @@ const math3Lessons: LearningTopic[] = [
             $\\int_a^b \\pi (f(x))^2 dx$ で求められます。
             これは、円の面積 $\\pi r^2$ を積み重ねていくイメージです。
           `,
-                examples: [
+                examples: normalizeExamples([
                     {
                         title: "回転体の体積の例",
-                        detail: "曲線 $y = x$ ($0 \\le x \\le 1$) を $x$軸の周りに回転させてできる立体の体積は $\\int_0^1 \\pi (x)^2 dx = \\frac{1}{3}\\pi$",
+                        question:
+                            "曲線 $y = x$ ($0 \\le x \\le 1$) を $x$軸の周りに回転させてできる立体の体積は $\\int_0^1 \\pi (x)^2 dx = \\frac{1}{3}\\pi$",
+                        answer: "π/3",
                     },
-                ],
+                ]),
                 pitfall: {
                     title: "よくある間違い：公式の適用ミス",
                     detail: `
@@ -2436,7 +2689,7 @@ const math3Lessons: LearningTopic[] = [
               公式の意味を理解し、正しく適用することが大切です。
             `,
                 },
-                problems: [
+                problems: normalizeProblems([
                     {
                         question:
                             "曲線 $y = \\sqrt{x}$ と $x$軸、直線 $x=1$ で囲まれた部分を $x$軸の周りに回転させてできる立体の体積を求めなさい。",
@@ -2449,7 +2702,7 @@ const math3Lessons: LearningTopic[] = [
                         answer: "2π/15",
                         hint: "2つの曲線で囲まれた領域を回転させる場合、外側の半径の二乗から内側の半径の二乗を引いたものを積分します。",
                     },
-                ],
+                ]),
             },
         ],
     },
