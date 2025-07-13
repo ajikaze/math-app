@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import type { LearningTopic, LearningStep } from "../data/lessonsData";
 import MathJaxDisplay from "./MathJaxDisplay";
 
@@ -21,6 +21,32 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
     canGoNext,
     canGoPrevious,
 }) => {
+    // 問題ごとの答え・ヒント表示状態
+    const [showAnswers, setShowAnswers] = useState<boolean[]>(() =>
+        currentStep.problems
+            ? Array(currentStep.problems.length).fill(false)
+            : []
+    );
+    const [showHints, setShowHints] = useState<boolean[]>(() =>
+        currentStep.problems
+            ? Array(currentStep.problems.length).fill(false)
+            : []
+    );
+
+    // ステップが変わったらリセット
+    React.useEffect(() => {
+        setShowAnswers(
+            currentStep.problems
+                ? Array(currentStep.problems.length).fill(false)
+                : []
+        );
+        setShowHints(
+            currentStep.problems
+                ? Array(currentStep.problems.length).fill(false)
+                : []
+        );
+    }, [currentStep]);
+
     return (
         <div className="bg-white p-6 rounded-lg shadow-md">
             <div className="mb-6">
@@ -60,23 +86,55 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
                             key={index}
                             className="mb-4 p-4 bg-gray-50 rounded-lg overflow-hidden"
                         >
-                            <div className="mb-2">
-                                <span className="font-medium text-blue-700">
+                            <div className="mb-2 flex flex-row items-start gap-2 bg-gray-50 border-l-4 border-blue-400 pl-3 rounded">
+                                <span className="font-semibold text-blue-700 min-w-[3.5rem] whitespace-nowrap flex-shrink-0">
                                     問題：
                                 </span>
-                                <MathJaxDisplay content={problem.question} />
+                                <div className="flex-1 break-words font-semibold">
+                                    <MathJaxDisplay
+                                        content={problem.question}
+                                    />
+                                </div>
                             </div>
-                            <div className="mb-2">
-                                <span className="font-medium text-green-700">
-                                    答え：
-                                </span>
-                                <MathJaxDisplay content={problem.answer} />
+                            <div className="mt-8 flex flex-row items-center gap-2 justify-end">
+                                <button
+                                    className="px-3 py-1 w-32 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium transition-colors"
+                                    onClick={() =>
+                                        setShowAnswers((arr) =>
+                                            arr.map((v, i) =>
+                                                i === index ? !v : v
+                                            )
+                                        )
+                                    }
+                                >
+                                    {showAnswers[index]
+                                        ? "答えを隠す"
+                                        : "答えを見る"}
+                                </button>
+                                {problem.hint && (
+                                    <button
+                                        className="px-3 py-1 w-32 bg-yellow-500 text-white rounded hover:bg-yellow-600 font-medium transition-colors"
+                                        onClick={() =>
+                                            setShowHints((arr) =>
+                                                arr.map((v, i) =>
+                                                    i === index ? !v : v
+                                                )
+                                            )
+                                        }
+                                    >
+                                        {showHints[index]
+                                            ? "ヒントを隠す"
+                                            : "ヒントを見る"}
+                                    </button>
+                                )}
                             </div>
-                            {problem.hint && (
-                                <div className="text-sm text-gray-600 mt-1">
-                                    <span className="font-medium text-yellow-700">
-                                        ヒント：
-                                    </span>
+                            {showAnswers[index] && (
+                                <div className="mt-4 mb-2 ml-1 p-3 bg-blue-50 border border-blue-200 rounded transition-all">
+                                    <MathJaxDisplay content={problem.answer} />
+                                </div>
+                            )}
+                            {showHints[index] && problem.hint && (
+                                <div className="mt-4 mb-2 ml-1 p-3 bg-yellow-50 border border-yellow-200 rounded transition-all">
                                     <MathJaxDisplay content={problem.hint} />
                                 </div>
                             )}
