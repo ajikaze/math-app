@@ -34,6 +34,13 @@ export const AIProblemGenerator: React.FC<AIProblemGeneratorProps> = ({
         }
     };
 
+    // answerを$...$で囲む（すでに囲まれていなければ）
+    function toLatexAnswer(answer: string): string {
+        if (!answer) return answer;
+        if (/^\$.*\$$/.test(answer)) return answer;
+        return `$${answer}$`;
+    }
+
     return (
         <div className="bg-white p-6 rounded-lg shadow-md">
             <h3 className="text-xl font-bold mb-4 text-gray-800">AI問題生成</h3>
@@ -98,7 +105,9 @@ export const AIProblemGenerator: React.FC<AIProblemGeneratorProps> = ({
                             <h6 className="font-medium text-gray-700 mb-2">
                                 答え:
                             </h6>
-                            <MathJaxDisplay content={problem.answer} />
+                            <MathJaxDisplay
+                                content={toLatexAnswer(problem.answer)}
+                            />
                         </div>
                     </details>
 
