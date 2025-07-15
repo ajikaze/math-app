@@ -37,7 +37,12 @@ const MathJaxDisplay: React.FC<MathJaxDisplayProps> = ({
     }, [content]); // contentプロップが変更されたときにのみこのエフェクトを再実行
 
     // レンダリングされるDOM要素。refを介して直接操作されます。
-    return <div ref={ref} className={`break-words ${className || ""}`}></div>;
+    return (
+        <div
+            ref={ref}
+            className={`break-words whitespace-pre-wrap ${className || ""}`}
+        ></div>
+    );
 };
 
 export default MathJaxDisplay;
