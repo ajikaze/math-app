@@ -75,7 +75,7 @@ export const SubjectPage: React.FC<SubjectPageProps> = ({
     return (
         <div className="flex flex-col min-h-screen items-center bg-gray-50">
             {/* ヘッダー */}
-            <header className="bg-white shadow-sm border-b w-full">
+            <header className="fixed bg-white shadow-sm border-b w-full">
                 <div className="xl:max-w-[1280px] xl:mx-auto px-4 py-4 w-full">
                     <div className="flex justify-between items-center">
                         <div>
@@ -106,7 +106,7 @@ export const SubjectPage: React.FC<SubjectPageProps> = ({
                 </div>
             </header>
 
-            <div className="flex flex-col xs:flex-row w-full flex-1 xl:max-w-[1280px] xl:mx-auto px-4 py-4">
+            <div className="flex flex-col xs:flex-row w-full flex-1 xl:max-w-[1280px] xl:mx-auto px-4 py-4 mt-24">
                 {/* メインコンテンツ */}
                 <main className="w-full xs:w-2/3 xs:flex-[2] md:flex-[2] xl:flex-none bg-white">
                     <LessonViewer
