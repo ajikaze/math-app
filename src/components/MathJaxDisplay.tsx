@@ -24,6 +24,7 @@ const MathJaxDisplay: React.FC<MathJaxDisplayProps> = ({
             // MathJaxがロードされ、タイプセット機能が利用可能であることを再確認
             // MathJax.typesetPromiseは、指定された要素内の数式を処理します。
             if (window.MathJax.typesetPromise) {
+                // ※自動改行(linebreaks)設定はMathJax初期化時に行うのが推奨
                 window.MathJax.typesetPromise().catch((err: Error) =>
                     console.error("MathJax typeset error:", err)
                 );

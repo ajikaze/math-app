@@ -47,9 +47,12 @@ class APIService {
     }
 
     async askAIQuestion(question: string): Promise<APIResponse<string>> {
+        // 高校数学の範囲に限定し、「中学生」「高校生」という単語を使わず、
+        // 回答例として「...をわかりやすく解説します。」のような始まり方になるようにプロンプトを加工
+        const prompt = `あなたは高校数学の専門家です。次の質問に対して、高校数学の範囲のみで答えてください。「中学生」「高校生」という単語は使わず、解答は「${question}をわかりやすく解説します。」のような始まり方でお願いします。\n\n質問: ${question}`;
         return this.request<string>("/api/ask-question", {
             method: "POST",
-            body: JSON.stringify({ question }),
+            body: JSON.stringify({ question: prompt }),
         });
     }
 }

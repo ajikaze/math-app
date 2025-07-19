@@ -14,6 +14,11 @@ export const AIQuestionBox: React.FC = () => {
         }
     };
 
+    const handleClear = () => {
+        clearAnswer();
+        setQuestion("");
+    };
+
     return (
         <div className="bg-white p-6 rounded-lg shadow-md">
             <h3 className="text-xl font-bold mb-4 text-gray-800">AIに質問</h3>
@@ -57,10 +62,12 @@ export const AIQuestionBox: React.FC = () => {
                     <h4 className="font-semibold text-gray-800 mb-3">
                         AIの回答
                     </h4>
-                    <MathJaxDisplay content={answer} />
+                    <div className="overflow-x-auto overflow-y-hidden max-w-full pb-2">
+                        <MathJaxDisplay content={answer} />
+                    </div>
 
                     <button
-                        onClick={clearAnswer}
+                        onClick={handleClear}
                         className="mt-4 bg-gray-500 text-white py-3 px-4 rounded-md hover:bg-gray-600 transition-colors text-sm lg:text-base font-medium whitespace-nowrap"
                     >
                         クリア

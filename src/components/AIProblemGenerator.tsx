@@ -90,7 +90,7 @@ export const AIProblemGenerator: React.FC<AIProblemGeneratorProps> = ({
                         生成された問題
                     </h4>
 
-                    <div className="mb-4">
+                    <div className="mb-4 overflow-x-auto overflow-y-hidden max-w-full pb-2">
                         <h5 className="font-medium text-gray-700 mb-2">
                             問題:
                         </h5>
