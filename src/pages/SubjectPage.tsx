@@ -18,6 +18,7 @@ export const SubjectPage: React.FC<SubjectPageProps> = ({
     const [currentTopicIndex, setCurrentTopicIndex] = useState(0);
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [showTableOfContents, setShowTableOfContents] = useState(false);
+    const [reverseLayout, setReverseLayout] = useState(false); // 追加: レイアウト反転状態
 
     const currentTopic = lessonsData[currentTopicIndex];
     const currentStep = currentTopic?.steps[currentStepIndex];
@@ -101,6 +102,24 @@ export const SubjectPage: React.FC<SubjectPageProps> = ({
                             >
                                 ホーム
                             </button>
+                            <button
+                                onClick={() =>
+                                    setReverseLayout((prev) => !prev)
+                                }
+                                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center justify-center"
+                                title="メインとサイドの幅を逆転"
+                            >
+                                {/* Google Fonts Material Icons: transition_side */}
+                                <span
+                                    className={`material-symbols-outlined text-2xl transition-transform duration-300 ${
+                                        reverseLayout ? "rotate-180" : ""
+                                    }`}
+                                    aria-label="幅の比率を切り替え"
+                                    style={{ textTransform: "none" }}
+                                >
+                                    transition_slide
+                                </span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -108,7 +127,13 @@ export const SubjectPage: React.FC<SubjectPageProps> = ({
 
             <div className="flex flex-col xs:flex-row w-full flex-1 xl:max-w-[1280px] xl:mx-auto px-4 py-4 mt-24">
                 {/* メインコンテンツ */}
-                <main className="w-full xs:w-2/3 xs:flex-[2] md:flex-[2] xl:flex-none bg-white">
+                <main
+                    className={
+                        reverseLayout
+                            ? "w-full xs:w-1/3 xs:flex-[1] md:flex-[1] xl:flex-none bg-white order-2 xs:order-1"
+                            : "w-full xs:w-2/3 xs:flex-[2] md:flex-[2] xl:flex-none bg-white order-1"
+                    }
+                >
                     <LessonViewer
                         currentTopic={currentTopic}
                         currentStep={currentStep}
@@ -120,7 +145,13 @@ export const SubjectPage: React.FC<SubjectPageProps> = ({
                     />
                 </main>
                 {/* サイドバー */}
-                <aside className="w-full xs:w-1/3 xs:flex-[1] md:flex-[1] xs:min-w-[150px] xs:max-w-[400px] xl:flex-none bg-gray-100 mb-4 xs:mb-0 xs:ml-6">
+                <aside
+                    className={
+                        reverseLayout
+                            ? "w-full xs:w-2/3 xs:flex-[2] md:flex-[2] xs:min-w-[150px] xs:max-w-[100%] xl:flex-none bg-gray-100 mb-4 xs:mb-0 xs:mr-6 order-1 xs:order-2"
+                            : "w-full xs:w-1/3 xs:flex-[1] md:flex-[1] xs:min-w-[150px] xs:max-w-[400px] xl:flex-none bg-gray-100 mb-4 xs:mb-0 xs:ml-6 order-2"
+                    }
+                >
                     <div className="space-y-6">
                         {/* AI問題生成 */}
                         <AIProblemGenerator

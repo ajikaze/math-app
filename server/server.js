@@ -143,7 +143,7 @@ app.post("/api/ask-question", async (req, res) => {
             contents: chatHistory,
             generationConfig: {
                 temperature: 0.7,
-                maxOutputTokens: 1000,
+                maxOutputTokens: 2048,
             },
         };
 
