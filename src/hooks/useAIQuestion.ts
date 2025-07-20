@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { apiService } from "../services/api";
+import { validatePromptInput } from "../utils/validatePromptInput";
+import { sanitizeAIOutput } from "../utils/sanitizeAIOutput";
 
 export const useAIQuestion = () => {
     const [loading, setLoading] = useState(false);
@@ -7,6 +9,13 @@ export const useAIQuestion = () => {
     const [answer, setAnswer] = useState<string | null>(null);
 
     const askQuestion = async (question: string) => {
+        // ここでバリデーション
+        const validationError = validatePromptInput(question);
+        if (validationError) {
+            setError(validationError);
+            return;
+        }
+
         setLoading(true);
         setError(null);
         setAnswer(null);
@@ -15,7 +24,7 @@ export const useAIQuestion = () => {
             const response = await apiService.askAIQuestion(question);
 
             if (response.success && response.data) {
-                setAnswer(response.data);
+                setAnswer(sanitizeAIOutput(response.data));
             } else {
                 setError(response.error || "質問の処理に失敗しました");
             }
