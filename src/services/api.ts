@@ -1,6 +1,7 @@
 import type { AIGeneratedProblem, APIResponse } from "../types";
 
-const API_BASE_URL = "http://localhost:3001";
+const API_BASE_URL =
+    import.meta.env.MODE === "development" ? "http://localhost:3001" : "";
 
 class APIService {
     private async request<T>(
