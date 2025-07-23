@@ -89,24 +89,36 @@ export const SubjectPage: React.FC<SubjectPageProps> = ({
                         </div>
                         <div className="flex gap-2">
                             <button
+                                onClick={onBackToHome}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center"
+                            >
+                                <span
+                                    className="material-symbols-outlined text-2xl"
+                                    aria-label="ホーム"
+                                    style={{ textTransform: "none" }}
+                                >
+                                    home
+                                </span>
+                            </button>
+                            <button
                                 onClick={() =>
                                     setShowTableOfContents(!showTableOfContents)
                                 }
                                 className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
                             >
-                                {showTableOfContents ? "閉じる" : "目次"}
-                            </button>
-                            <button
-                                onClick={onBackToHome}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                            >
-                                ホーム
+                                <span
+                                    className="material-symbols-outlined text-2xl"
+                                    aria-label="目次"
+                                    style={{ textTransform: "none" }}
+                                >
+                                    menu
+                                </span>
                             </button>
                             <button
                                 onClick={() =>
                                     setReverseLayout((prev) => !prev)
                                 }
-                                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center justify-center"
+                                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center justify-center hidden xs:inline-flex"
                                 title="メインとサイドの幅を逆転"
                             >
                                 {/* Google Fonts Material Icons: transition_side */}
