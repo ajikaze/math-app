@@ -76,7 +76,7 @@ export const SubjectPage: React.FC<SubjectPageProps> = ({
     return (
         <div className="flex flex-col min-h-screen items-center bg-gray-50">
             {/* ヘッダー */}
-            <header className="fixed bg-white shadow-sm border-b w-full">
+            <header className="fixed bg-white shadow-sm border-b w-full z-10">
                 <div className="xl:max-w-[1280px] xl:mx-auto px-4 py-4 w-full">
                     <div className="flex justify-between items-center">
                         <div>
@@ -160,8 +160,8 @@ export const SubjectPage: React.FC<SubjectPageProps> = ({
                 <aside
                     className={
                         reverseLayout
-                            ? "w-full xs:w-2/3 xs:flex-[2] md:flex-[2] xs:min-w-[150px] xs:max-w-[100%] xl:flex-none bg-gray-100 mb-4 xs:mb-0 xs:mr-6 order-1 xs:order-2"
-                            : "w-full xs:w-1/3 xs:flex-[1] md:flex-[1] xs:min-w-[150px] xs:max-w-[400px] xl:flex-none bg-gray-100 mb-4 xs:mb-0 xs:ml-6 order-2"
+                            ? "w-full xs:w-2/3 xs:flex-[2] md:flex-[2] xs:min-w-[150px] xs:max-w-[100%] xl:flex-none bg-gray-100 mb-4 xs:mb-0 xs:mr-6 order-1 xs:order-2 mt-6 xs:mt-0"
+                            : "w-full xs:w-1/3 xs:flex-[1] md:flex-[1] xs:min-w-[150px] xs:max-w-[400px] xl:flex-none bg-gray-100 mb-4 xs:mb-0 xs:ml-6 order-2 mt-6 xs:mt-0"
                     }
                 >
                     <div className="space-y-6">
