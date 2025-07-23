@@ -118,7 +118,7 @@ export const SubjectPage: React.FC<SubjectPageProps> = ({
                                 onClick={() =>
                                     setReverseLayout((prev) => !prev)
                                 }
-                                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center justify-center hidden xs:inline-flex"
+                                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors items-center justify-center hidden xs:inline-flex"
                                 title="メインとサイドの幅を逆転"
                             >
                                 {/* Google Fonts Material Icons: transition_side */}

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import type { LearningTopic, LearningStep } from "../data/lessonsData";
 import MathJaxDisplay from "./MathJaxDisplay";
+import { toLatexMath } from "../data/lessonsData";
 
 interface LessonViewerProps {
     currentTopic: LearningTopic;
@@ -64,8 +65,10 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
                     {currentStep.title}
                 </h3>
 
-                <div className="prose max-w-none">
-                    <MathJaxDisplay content={currentStep.explanation} />
+                <div className="prose max-w-none break-words">
+                    <MathJaxDisplay
+                        content={toLatexMath(currentStep.explanation)}
+                    />
                 </div>
             </div>
 
@@ -74,7 +77,9 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
                     <h4 className="font-semibold text-yellow-800 mb-2">
                         ⚠️ 注意点
                     </h4>
-                    <MathJaxDisplay content={currentStep.pitfall.detail} />
+                    <MathJaxDisplay
+                        content={toLatexMath(currentStep.pitfall.detail)}
+                    />
                 </div>
             )}
 
@@ -92,7 +97,7 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
                                 </span>
                                 <div className="flex-1 break-words font-semibold">
                                     <MathJaxDisplay
-                                        content={problem.question}
+                                        content={toLatexMath(problem.question)}
                                     />
                                 </div>
                             </div>
@@ -130,12 +135,16 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
                             </div>
                             {showAnswers[index] && (
                                 <div className="mt-4 mb-2 ml-1 p-3 bg-blue-50 border border-blue-200 rounded transition-all">
-                                    <MathJaxDisplay content={problem.answer} />
+                                    <MathJaxDisplay
+                                        content={toLatexMath(problem.answer)}
+                                    />
                                 </div>
                             )}
                             {showHints[index] && problem.hint && (
                                 <div className="mt-4 mb-2 ml-1 p-3 bg-yellow-50 border border-yellow-200 rounded transition-all">
-                                    <MathJaxDisplay content={problem.hint} />
+                                    <MathJaxDisplay
+                                        content={toLatexMath(problem.hint)}
+                                    />
                                 </div>
                             )}
                         </div>

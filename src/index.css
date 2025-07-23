@@ -1,3 +1,16 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* MathJax数式の折り返し強制（より強力に） */
+mjx-container,
+mjx-container * {
+    max-width: 100% !important;
+    overflow-wrap: break-word !important;
+    word-break: break-all !important;
+    white-space: normal !important;
+    box-sizing: border-box !important;
+}
+mjx-container[jax="CHTML"][display="true"] {
+    display: block !important;
+}

@@ -41,7 +41,8 @@ const MathJaxDisplay: React.FC<MathJaxDisplayProps> = ({
     return (
         <div
             ref={ref}
-            className={`break-words whitespace-pre-wrap ${className || ""}`}
+            className={`break-words max-w-full ${className || ""}`}
+            style={{ wordBreak: "break-all", whiteSpace: "normal" }}
         ></div>
     );
 };
