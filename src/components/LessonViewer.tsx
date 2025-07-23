@@ -66,9 +66,36 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
                 </h3>
 
                 <div className="prose max-w-none break-words">
-                    <MathJaxDisplay
-                        content={toLatexMath(currentStep.explanation)}
-                    />
+                    {/* ポイント：以降を検出して分割表示 */}
+                    {(() => {
+                        const explanation = toLatexMath(
+                            currentStep.explanation
+                        );
+                        const pointIdx = explanation.indexOf("ポイント：");
+                        if (pointIdx === -1) {
+                            return <MathJaxDisplay content={explanation} />;
+                        } else {
+                            const before = explanation.slice(0, pointIdx);
+                            const after = explanation.slice(pointIdx);
+                            return (
+                                <>
+                                    <MathJaxDisplay content={before} />
+                                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                        <div className="font-semibold text-blue-800 mb-2 flex items-center">
+                                            <span className="mr-1">💡</span>
+                                            ポイント
+                                        </div>
+                                        <MathJaxDisplay
+                                            content={after
+                                                .replace(/^ポイント：/, "")
+                                                .replace(/^ポイント/, "")
+                                                .replace(/^<br\s*\/?\s*>/, "")}
+                                        />
+                                    </div>
+                                </>
+                            );
+                        }
+                    })()}
                 </div>
             </div>
 

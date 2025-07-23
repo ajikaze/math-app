@@ -104,7 +104,7 @@ export const SubjectPage: React.FC<SubjectPageProps> = ({
                                 onClick={() =>
                                     setShowTableOfContents(!showTableOfContents)
                                 }
-                                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
                             >
                                 <span
                                     className="material-symbols-outlined text-2xl"
