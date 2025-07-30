@@ -9,11 +9,16 @@
         "preview": "vite preview"
     },
     "dependencies": {
+        "@emotion/react": "^11.14.0",
+        "@emotion/styled": "^11.14.1",
+        "@mui/material": "^7.2.0",
         "@vercel/node": "^5.3.6",
         "jsxgraph": "^1.11.1",
         "node-fetch": "^2.6.13",
         "react": "^19.1.0",
         "react-dom": "^19.1.0",
+        "react-slick": "^0.30.3",
+        "slick-carousel": "^1.8.1",
         "vite-plugin-pwa": "^1.0.1"
     },
     "engines": {
