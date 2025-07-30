@@ -173,6 +173,38 @@ $-2x > 4$ を解く際に、$x > -2$ としてしまうのは間違いです。
 両辺を負の数 $(-2)$ で割るため、不等号の向きが逆になり、$x < -2$ が正解です。
 `,
                 },
+                graphs: [
+                    {
+                        type: "linear",
+                        params: {
+                            slope: 2,
+                            intercept: 1,
+                            domain: [-3, 4],
+                        },
+                        style: { strokeColor: "#FF4136" },
+                        description: "一次関数 y = 2x + 1 のグラフ",
+                    },
+                    {
+                        type: "linear",
+                        params: {
+                            slope: -1,
+                            intercept: 3,
+                            domain: [-2, 5],
+                        },
+                        style: { strokeColor: "#0074D9" },
+                        description: "一次関数 y = -x + 3 のグラフ",
+                    },
+                    {
+                        type: "linear",
+                        params: {
+                            slope: 0.5,
+                            intercept: -2,
+                            domain: [-4, 6],
+                        },
+                        style: { strokeColor: "#2ECC40" },
+                        description: "一次関数 y = 0.5x - 2 のグラフ",
+                    },
+                ],
                 problems: normalizeProblems([
                     {
                         question: "$3x - 5 = 7$ を解きなさい。",
@@ -209,6 +241,44 @@ $-2x > 4$ を解く際に、$x > -2$ としてしまうのは間違いです。
 特に、判別式 $D$ の計算は慎重に行いましょう。
 `,
                 },
+                graphs: [
+                    {
+                        type: "quadratic",
+                        params: {
+                            a: 1,
+                            b: -5,
+                            c: 6,
+                            domain: [-1, 6],
+                        },
+                        style: { strokeColor: "#FF4136" },
+                        description:
+                            "二次関数 y = x² - 5x + 6 のグラフ（x軸との交点が2, 3）",
+                    },
+                    {
+                        type: "quadratic",
+                        params: {
+                            a: 1,
+                            b: 2,
+                            c: -1,
+                            domain: [-4, 2],
+                        },
+                        style: { strokeColor: "#0074D9" },
+                        description:
+                            "二次関数 y = x² + 2x - 1 のグラフ（解の公式で解く例）",
+                    },
+                    {
+                        type: "quadratic",
+                        params: {
+                            a: -1,
+                            b: 0,
+                            c: 4,
+                            domain: [-3, 3],
+                        },
+                        style: { strokeColor: "#2ECC40" },
+                        description:
+                            "二次関数 y = -x² + 4 のグラフ（上に凸の例）",
+                    },
+                ],
                 problems: normalizeProblems([
                     {
                         question: "$x^2 - 5x + 6 = 0$ を解きなさい。",
@@ -1343,6 +1413,48 @@ $P(k)=0$ となる $k$ を見つける際、闇雲に数を代入するのでは
 これを間違えると、計算結果が大きく変わってしまいます。
 `,
                 },
+                graphs: [
+                    {
+                        type: "trigonometric",
+                        params: {
+                            trigType: "sin",
+                            amplitude: 1,
+                            frequency: 1,
+                            phase: 0,
+                            verticalShift: 0,
+                            domain: [-2 * Math.PI, 2 * Math.PI],
+                        },
+                        style: { strokeColor: "#FF4136" },
+                        description: "正弦関数 y = sin(x) のグラフ",
+                    },
+                    {
+                        type: "trigonometric",
+                        params: {
+                            trigType: "cos",
+                            amplitude: 1,
+                            frequency: 1,
+                            phase: 0,
+                            verticalShift: 0,
+                            domain: [-2 * Math.PI, 2 * Math.PI],
+                        },
+                        style: { strokeColor: "#0074D9" },
+                        description: "余弦関数 y = cos(x) のグラフ",
+                    },
+                    {
+                        type: "trigonometric",
+                        params: {
+                            trigType: "sin",
+                            amplitude: 2,
+                            frequency: 2,
+                            phase: Math.PI / 4,
+                            verticalShift: 1,
+                            domain: [-2 * Math.PI, 2 * Math.PI],
+                        },
+                        style: { strokeColor: "#2ECC40" },
+                        description:
+                            "変形された正弦関数 y = 2sin(2x + π/4) + 1 のグラフ",
+                    },
+                ],
                 problems: normalizeProblems([
                     {
                         question: "$\\sin(\\frac{\\pi}{2})$ の値を求めなさい。",
@@ -1426,6 +1538,47 @@ $P(k)=0$ となる $k$ を見つける際、闇雲に数を代入するのでは
                         hint: "指数法則 $(a^m)^n = a^{mn}$ を使いましょう。",
                     },
                 ]),
+                graphs: [
+                    {
+                        type: "exponential",
+                        params: {
+                            base: 2,
+                            scale: 1,
+                            domain: [-3, 3],
+                        },
+                        style: {
+                            strokeColor: "#FF6B6B",
+                            strokeWidth: 2,
+                        },
+                        description: "指数関数 y = 2^x のグラフ",
+                    },
+                    {
+                        type: "exponential",
+                        params: {
+                            base: 3,
+                            scale: 1,
+                            domain: [-3, 3],
+                        },
+                        style: {
+                            strokeColor: "#4ECDC4",
+                            strokeWidth: 2,
+                        },
+                        description: "指数関数 y = 3^x のグラフ",
+                    },
+                    {
+                        type: "exponential",
+                        params: {
+                            base: 0.5,
+                            scale: 1,
+                            domain: [-3, 3],
+                        },
+                        style: {
+                            strokeColor: "#45B7D1",
+                            strokeWidth: 2,
+                        },
+                        description: "指数関数 y = 0.5^x のグラフ（減少関数）",
+                    },
+                ],
             },
             {
                 title: "対数関数",
@@ -1459,6 +1612,51 @@ $P(k)=0$ となる $k$ を見つける際、闇雲に数を代入するのでは
                         hint: "対数法則 $\\log_a M + \\log_a N = \\log_a MN$ を使いましょう。",
                     },
                 ]),
+                graphs: [
+                    {
+                        type: "logarithmic",
+                        params: {
+                            logBase: 2,
+                            logScale: 1,
+                            logShift: 0,
+                            domain: [0.1, 5],
+                        },
+                        style: {
+                            strokeColor: "#4ECDC4",
+                            strokeWidth: 2,
+                        },
+                        description: "対数関数 y = log₂(x) のグラフ",
+                    },
+                    {
+                        type: "logarithmic",
+                        params: {
+                            logBase: 10,
+                            logScale: 1,
+                            logShift: 0,
+                            domain: [0.1, 5],
+                        },
+                        style: {
+                            strokeColor: "#FF6B6B",
+                            strokeWidth: 2,
+                        },
+                        description: "常用対数関数 y = log₁₀(x) のグラフ",
+                    },
+                    {
+                        type: "logarithmic",
+                        params: {
+                            logBase: 0.5,
+                            logScale: 1,
+                            logShift: 0,
+                            domain: [0.1, 5],
+                        },
+                        style: {
+                            strokeColor: "#45B7D1",
+                            strokeWidth: 2,
+                        },
+                        description:
+                            "対数関数 y = log₀.₅(x) のグラフ（減少関数）",
+                    },
+                ],
             },
         ],
     },

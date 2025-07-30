@@ -64,12 +64,77 @@ export interface AppSettings {
 
 // JSXGraphで使うグラフ情報
 export type GraphData = {
-    type: "line" | "circle" | "function" | "triangle" | "scatter" | string;
-    params: Record<string, any>;
+    type:
+        | "triangle"
+        | "centroid"
+        | "incenter"
+        | "circumcenter"
+        | "orthocenter"
+        | "linear"
+        | "quadratic"
+        | "trigonometric"
+        | "exponential"
+        | "logarithmic"
+        | "circle"
+        | "ellipse"
+        | "hyperbola"
+        | "parabola"
+        | "histogram"
+        | "scatter"
+        | "boxplot"
+        | string;
+    params: {
+        // 三角形関連
+        points?: [number, number][];
+        similarity?: boolean;
+
+        // 関数グラフ関連
+        function?: string; // 関数の式（例: "2*x + 1"）
+        coefficients?: number[]; // 係数配列
+        domain?: [number, number]; // 定義域
+        range?: [number, number]; // 値域
+
+        // 一次関数: y = ax + b
+        slope?: number; // 傾き a
+        intercept?: number; // 切片 b
+
+        // 二次関数: y = ax² + bx + c
+        a?: number; // 二次の係数
+        b?: number; // 一次の係数
+        c?: number; // 定数項
+
+        // 三角関数: y = a*sin(bx + c) + d
+        amplitude?: number; // 振幅 a
+        frequency?: number; // 周波数 b
+        phase?: number; // 位相 c
+        verticalShift?: number; // 垂直移動 d
+        trigType?: "sin" | "cos" | "tan"; // 三角関数の種類
+
+        // 指数関数: y = a * b^x
+        base?: number; // 底 b
+        scale?: number; // スケール a
+
+        // 対数関数: y = a * log_b(x) + c
+        logBase?: number; // 対数の底
+        logScale?: number; // スケール a
+        logShift?: number; // 垂直移動 c
+
+        // 円・楕円関連
+        center?: [number, number]; // 中心座標
+        radius?: number; // 半径
+        semiMajorAxis?: number; // 長軸
+        semiMinorAxis?: number; // 短軸
+
+        // 統計関連
+        data?: number[]; // データ配列
+        dataPairs?: [number, number][]; // データペア配列
+        bins?: number; // ヒストグラムのビン数
+    };
     style?: {
         strokeColor?: string;
         fillColor?: string;
         strokeWidth?: number;
+        dash?: number;
         [key: string]: any;
     };
     description?: string;
