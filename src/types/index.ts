@@ -125,6 +125,11 @@ export type GraphData = {
         semiMajorAxis?: number; // 長軸
         semiMinorAxis?: number; // 短軸
 
+        // 双曲線・放物線関連
+        horizontal?: boolean; // 横軸が主軸かどうか
+        vertex?: [number, number]; // 頂点座標（放物線）
+        focus?: [number, number]; // 焦点座標（放物線）
+
         // 統計関連
         data?: number[]; // データ配列
         dataPairs?: [number, number][]; // データペア配列

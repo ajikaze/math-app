@@ -14,6 +14,70 @@ export type GraphModalProps = {
 const GraphModal: React.FC<GraphModalProps> = ({ open, onClose, graphs }) => {
     console.log("GraphModal render:", { open, graphs });
 
+    // 統計グラフ用のboundingbox自動計算関数
+    const getBoundingBoxForGraph = (
+        graph: GraphData
+    ): [number, number, number, number] => {
+        switch (graph.type) {
+            case "histogram": {
+                const data = graph.params.data ?? [];
+                if (data.length === 0) return [-4, 4, 4, -4];
+
+                const min = Math.min(...data);
+                const max = Math.max(...data);
+                const range = max - min;
+                const bins = graph.params.bins ?? 5;
+                const binWidth = range / bins;
+
+                // 各ビンの頻度を計算
+                const frequencies = new Array(bins).fill(0);
+                data.forEach((value) => {
+                    const binIndex = Math.min(
+                        Math.floor((value - min) / binWidth),
+                        bins - 1
+                    );
+                    frequencies[binIndex]++;
+                });
+
+                const maxFreq = Math.max(...frequencies);
+                const yMax = (maxFreq / Math.max(...frequencies)) * 3; // 最大高さを3に正規化
+
+                // 余白を持たせる
+                return [min - 1, yMax + 2, max + 1, -2];
+            }
+
+            case "scatter": {
+                const pairs = graph.params.dataPairs ?? [];
+                if (pairs.length === 0) return [-4, 4, 4, -4];
+
+                const xs = pairs.map(([x]) => x);
+                const ys = pairs.map(([, y]) => y);
+                const minX = Math.min(...xs);
+                const maxX = Math.max(...xs);
+                const minY = Math.min(...ys);
+                const maxY = Math.max(...ys);
+
+                // 余白を持たせる
+                return [minX - 1, maxY + 1, maxX + 1, minY - 1];
+            }
+
+            case "boxplot": {
+                const data = graph.params.data ?? [];
+                if (data.length === 0) return [-4, 4, 4, -4];
+
+                const min = Math.min(...data);
+                const max = Math.max(...data);
+
+                // 箱ひげ図はy軸方向に余白を持たせる
+                return [min - 2, 3, max + 2, -3];
+            }
+
+            default:
+                // 幾何・関数グラフは従来通り原点中央
+                return [-4, 4, 4, -4];
+        }
+    };
+
     // 内心を計算する関数
     const calculateIncenter = (A: any, B: any, C: any) => {
         const ax = A.X(),
@@ -784,6 +848,602 @@ const GraphModal: React.FC<GraphModalProps> = ({ open, onClose, graphs }) => {
                 break;
             }
 
+            case "circle": {
+                console.log("Drawing circle...");
+
+                const { center = [0, 0], radius = 2 } = graph.params;
+
+                // 円の中心点を作成
+                const centerPoint = board.create("point", center, {
+                    strokeColor: style.strokeColor || "#FF4136",
+                    fillColor: style.strokeColor || "#FF4136",
+                    size: 3,
+                    name: "中心",
+                });
+
+                // 円を描画
+                board.create("circle", [centerPoint, radius], {
+                    strokeColor: style.strokeColor || "#FF4136",
+                    strokeWidth: style.strokeWidth || 2,
+                    fillColor: "none",
+                    ...style,
+                });
+
+                // 説明テキスト
+                board.create(
+                    "text",
+                    [
+                        center[0] + radius + 0.5,
+                        center[1] + radius + 0.5,
+                        `(x-${center[0]})² + (y-${center[1]})² = ${radius}²`,
+                    ],
+                    {
+                        fontSize: 14,
+                        color: style.strokeColor || "#FF4136",
+                    }
+                );
+                break;
+            }
+
+            case "ellipse": {
+                console.log("Drawing ellipse...");
+
+                const {
+                    center = [0, 0],
+                    semiMajorAxis = 3,
+                    semiMinorAxis = 2,
+                } = graph.params;
+
+                // 楕円の中心点を作成
+                const centerPoint = board.create("point", center, {
+                    strokeColor: style.strokeColor || "#0074D9",
+                    fillColor: style.strokeColor || "#0074D9",
+                    size: 3,
+                    name: "中心",
+                });
+
+                // 楕円を描画（JSXGraphでは2つの焦点と点で定義）
+                const focus1 = board.create(
+                    "point",
+                    [
+                        center[0] -
+                            Math.sqrt(semiMajorAxis ** 2 - semiMinorAxis ** 2),
+                        center[1],
+                    ],
+                    {
+                        strokeColor: style.strokeColor || "#0074D9",
+                        fillColor: style.strokeColor || "#0074D9",
+                        size: 2,
+                        name: "F₁",
+                    }
+                );
+
+                const focus2 = board.create(
+                    "point",
+                    [
+                        center[0] +
+                            Math.sqrt(semiMajorAxis ** 2 - semiMinorAxis ** 2),
+                        center[1],
+                    ],
+                    {
+                        strokeColor: style.strokeColor || "#0074D9",
+                        fillColor: style.strokeColor || "#0074D9",
+                        size: 2,
+                        name: "F₂",
+                    }
+                );
+
+                const pointOnEllipse = board.create(
+                    "point",
+                    [center[0] + semiMajorAxis, center[1]],
+                    {
+                        strokeColor: style.strokeColor || "#0074D9",
+                        fillColor: style.strokeColor || "#0074D9",
+                        size: 2,
+                        name: "P",
+                    }
+                );
+
+                board.create("ellipse", [focus1, focus2, pointOnEllipse], {
+                    strokeColor: style.strokeColor || "#0074D9",
+                    strokeWidth: style.strokeWidth || 2,
+                    fillColor: "none",
+                    ...style,
+                });
+
+                // 説明テキスト
+                board.create(
+                    "text",
+                    [
+                        center[0] + semiMajorAxis + 0.5,
+                        center[1] + semiMinorAxis + 0.5,
+                        `(x-${center[0]})²/${semiMajorAxis}² + (y-${center[1]})²/${semiMinorAxis}² = 1`,
+                    ],
+                    {
+                        fontSize: 14,
+                        color: style.strokeColor || "#0074D9",
+                    }
+                );
+                break;
+            }
+
+            case "hyperbola": {
+                console.log("Drawing hyperbola...");
+
+                const {
+                    center = [0, 0],
+                    semiMajorAxis = 2,
+                    semiMinorAxis = 1,
+                    horizontal = true, // 横軸が主軸かどうか
+                } = graph.params;
+
+                // 双曲線の中心点を作成
+                const centerPoint = board.create("point", center, {
+                    strokeColor: style.strokeColor || "#2ECC40",
+                    fillColor: style.strokeColor || "#2ECC40",
+                    size: 3,
+                    name: "中心",
+                });
+
+                // 双曲線を描画（関数として定義）
+                const hyperbolaFunc = (x: number) => {
+                    if (horizontal) {
+                        // 横軸が主軸の場合: (x-h)²/a² - (y-k)²/b² = 1
+                        const term =
+                            (x - center[0]) ** 2 / semiMajorAxis ** 2 - 1;
+                        if (term < 0) return NaN;
+                        const y1 = center[1] + semiMinorAxis * Math.sqrt(term);
+                        const y2 = center[1] - semiMinorAxis * Math.sqrt(term);
+                        return [y1, y2];
+                    } else {
+                        // 縦軸が主軸の場合: (y-k)²/a² - (x-h)²/b² = 1
+                        const term = (x - center[0]) ** 2 / semiMinorAxis ** 2;
+                        const y1 =
+                            center[1] + semiMajorAxis * Math.sqrt(1 + term);
+                        const y2 =
+                            center[1] - semiMajorAxis * Math.sqrt(1 + term);
+                        return [y1, y2];
+                    }
+                };
+
+                // 双曲線の両枝を描画
+                const domain = horizontal
+                    ? [
+                          center[0] - semiMajorAxis - 2,
+                          center[0] + semiMajorAxis + 2,
+                      ]
+                    : [
+                          center[0] - semiMinorAxis - 2,
+                          center[0] + semiMinorAxis + 2,
+                      ];
+
+                // 上枝
+                const upperBranch = (x: number) => {
+                    const result = hyperbolaFunc(x);
+                    return Array.isArray(result) ? result[0] : result;
+                };
+
+                // 下枝
+                const lowerBranch = (x: number) => {
+                    const result = hyperbolaFunc(x);
+                    return Array.isArray(result) ? result[1] : result;
+                };
+
+                board.create(
+                    "functiongraph",
+                    [upperBranch, domain[0], domain[1]],
+                    {
+                        strokeColor: style.strokeColor || "#2ECC40",
+                        strokeWidth: style.strokeWidth || 2,
+                        ...style,
+                    }
+                );
+
+                board.create(
+                    "functiongraph",
+                    [lowerBranch, domain[0], domain[1]],
+                    {
+                        strokeColor: style.strokeColor || "#2ECC40",
+                        strokeWidth: style.strokeWidth || 2,
+                        ...style,
+                    }
+                );
+
+                // 説明テキスト
+                const equation = horizontal
+                    ? `(x-${center[0]})²/${semiMajorAxis}² - (y-${center[1]})²/${semiMinorAxis}² = 1`
+                    : `(y-${center[1]})²/${semiMajorAxis}² - (x-${center[0]})²/${semiMinorAxis}² = 1`;
+
+                board.create(
+                    "text",
+                    [domain[1] - 1, center[1] + semiMinorAxis + 1, equation],
+                    {
+                        fontSize: 14,
+                        color: style.strokeColor || "#2ECC40",
+                    }
+                );
+                break;
+            }
+
+            case "parabola": {
+                console.log("Drawing parabola...");
+
+                const {
+                    vertex = [0, 0],
+                    focus = [0, 1],
+                    horizontal = false, // 縦軸が主軸かどうか
+                } = graph.params;
+
+                // 放物線の頂点を作成
+                const vertexPoint = board.create("point", vertex, {
+                    strokeColor: style.strokeColor || "#FF6B6B",
+                    fillColor: style.strokeColor || "#FF6B6B",
+                    size: 3,
+                    name: "頂点",
+                });
+
+                // 焦点を作成
+                const focusPoint = board.create("point", focus, {
+                    strokeColor: style.strokeColor || "#FF6B6B",
+                    fillColor: style.strokeColor || "#FF6B6B",
+                    size: 2,
+                    name: "焦点",
+                });
+
+                // 放物線を描画（関数として定義）
+                const parabolaFunc = (x: number) => {
+                    if (horizontal) {
+                        // 横軸が主軸の場合: x = a(y-k)² + h
+                        const a = 1 / (4 * (focus[0] - vertex[0]));
+                        return vertex[0] + a * (x - vertex[1]) ** 2;
+                    } else {
+                        // 縦軸が主軸の場合: y = a(x-h)² + k
+                        const a = 1 / (4 * (focus[1] - vertex[1]));
+                        return vertex[1] + a * (x - vertex[0]) ** 2;
+                    }
+                };
+
+                const domain = horizontal
+                    ? [vertex[1] - 3, vertex[1] + 3]
+                    : [vertex[0] - 3, vertex[0] + 3];
+
+                board.create(
+                    "functiongraph",
+                    [parabolaFunc, domain[0], domain[1]],
+                    {
+                        strokeColor: style.strokeColor || "#FF6B6B",
+                        strokeWidth: style.strokeWidth || 2,
+                        ...style,
+                    }
+                );
+
+                // 説明テキスト
+                const a = horizontal
+                    ? 1 / (4 * (focus[0] - vertex[0]))
+                    : 1 / (4 * (focus[1] - vertex[1]));
+
+                const equation = horizontal
+                    ? `x = ${a.toFixed(2)}(y-${vertex[1]})² + ${vertex[0]}`
+                    : `y = ${a.toFixed(2)}(x-${vertex[0]})² + ${vertex[1]}`;
+
+                board.create(
+                    "text",
+                    [
+                        domain[1] - 1,
+                        horizontal ? vertex[0] + 1 : vertex[1] + 1,
+                        equation,
+                    ],
+                    {
+                        fontSize: 14,
+                        color: style.strokeColor || "#FF6B6B",
+                    }
+                );
+                break;
+            }
+
+            case "histogram": {
+                console.log("Drawing histogram...");
+
+                const { data = [1, 2, 2, 3, 3, 3, 4, 4, 5], bins = 5 } =
+                    graph.params;
+
+                // データの最小値と最大値を取得
+                const min = Math.min(...data);
+                const max = Math.max(...data);
+                const range = max - min;
+                const binWidth = range / bins;
+
+                // 各ビンの頻度を計算
+                const frequencies = new Array(bins).fill(0);
+                data.forEach((value) => {
+                    const binIndex = Math.min(
+                        Math.floor((value - min) / binWidth),
+                        bins - 1
+                    );
+                    frequencies[binIndex]++;
+                });
+
+                // ヒストグラムを描画
+                frequencies.forEach((freq, index) => {
+                    const binStart = min + index * binWidth;
+                    const binEnd = binStart + binWidth;
+                    const height = (freq / Math.max(...frequencies)) * 3; // 最大高さを3に正規化
+
+                    // 長方形を描画（個別の線分で構成して頂点の点を避ける）
+                    // 底辺
+                    board.create(
+                        "segment",
+                        [
+                            [binStart, 0],
+                            [binEnd, 0],
+                        ],
+                        {
+                            strokeColor: style.strokeColor || "#FF6B6B",
+                            strokeWidth: 1,
+                        }
+                    );
+                    // 右辺
+                    board.create(
+                        "segment",
+                        [
+                            [binEnd, 0],
+                            [binEnd, height],
+                        ],
+                        {
+                            strokeColor: style.strokeColor || "#FF6B6B",
+                            strokeWidth: 1,
+                        }
+                    );
+                    // 上辺
+                    board.create(
+                        "segment",
+                        [
+                            [binEnd, height],
+                            [binStart, height],
+                        ],
+                        {
+                            strokeColor: style.strokeColor || "#FF6B6B",
+                            strokeWidth: 1,
+                        }
+                    );
+                    // 左辺
+                    board.create(
+                        "segment",
+                        [
+                            [binStart, height],
+                            [binStart, 0],
+                        ],
+                        {
+                            strokeColor: style.strokeColor || "#FF6B6B",
+                            strokeWidth: 1,
+                        }
+                    );
+
+                    // 塗りつぶし用の多角形（頂点は非表示）
+                    const rect = board.create(
+                        "polygon",
+                        [
+                            [binStart, 0],
+                            [binEnd, 0],
+                            [binEnd, height],
+                            [binStart, height],
+                        ],
+                        {
+                            fillColor: style.fillColor || "#FF6B6B",
+                            vertices: { visible: false },
+                            borders: { visible: false }, // 境界線を非表示にして重複を避ける
+                        }
+                    );
+
+                    // 頻度ラベル
+                    if (freq > 0) {
+                        board.create(
+                            "text",
+                            [
+                                (binStart + binEnd) / 2,
+                                height + 0.1,
+                                freq.toString(),
+                            ],
+                            {
+                                fontSize: 12,
+                                color: style.strokeColor || "#FF6B6B",
+                            }
+                        );
+                    }
+                });
+
+                // 説明テキスト
+                board.create(
+                    "text",
+                    [-3.5, 3.5, `データ数: ${data.length}, ビン数: ${bins}`],
+                    {
+                        fontSize: 14,
+                        color: style.strokeColor || "#FF6B6B",
+                    }
+                );
+                break;
+            }
+
+            case "scatter": {
+                console.log("Drawing scatter plot...");
+
+                const {
+                    dataPairs = [
+                        [1, 2],
+                        [2, 3],
+                        [3, 1],
+                        [4, 4],
+                        [5, 2],
+                    ],
+                } = graph.params;
+
+                // 散布図の点を描画
+                dataPairs.forEach(([x, y], index) => {
+                    board.create("point", [x, y], {
+                        strokeColor: style.strokeColor || "#0074D9",
+                        fillColor: style.fillColor || "#0074D9",
+                        size: 3,
+                        name: `(${x}, ${y})`,
+                    });
+                });
+
+                // 相関係数を計算（簡易版）
+                const n = dataPairs.length;
+                const sumX = dataPairs.reduce((sum, [x]) => sum + x, 0);
+                const sumY = dataPairs.reduce((sum, [, y]) => sum + y, 0);
+                const sumXY = dataPairs.reduce((sum, [x, y]) => sum + x * y, 0);
+                const sumX2 = dataPairs.reduce((sum, [x]) => sum + x * x, 0);
+                const sumY2 = dataPairs.reduce((sum, [, y]) => sum + y * y, 0);
+
+                const correlation =
+                    (n * sumXY - sumX * sumY) /
+                    Math.sqrt(
+                        (n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY)
+                    );
+
+                // 説明テキスト
+                board.create(
+                    "text",
+                    [-3.5, 3.5, `相関係数: ${correlation.toFixed(3)}`],
+                    {
+                        fontSize: 14,
+                        color: style.strokeColor || "#0074D9",
+                    }
+                );
+                break;
+            }
+
+            case "boxplot": {
+                console.log("Drawing box plot...");
+
+                const { data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] } = graph.params;
+
+                // データをソート
+                const sortedData = [...data].sort((a, b) => a - b);
+                const n = sortedData.length;
+
+                // 統計量を計算
+                const min = sortedData[0];
+                const max = sortedData[n - 1];
+                const q1 = sortedData[Math.floor(n * 0.25)];
+                const median =
+                    n % 2 === 0
+                        ? (sortedData[n / 2 - 1] + sortedData[n / 2]) / 2
+                        : sortedData[Math.floor(n / 2)];
+                const q3 = sortedData[Math.floor(n * 0.75)];
+
+                // 箱ひげ図を描画
+                const boxHeight = 0.5;
+                const y = 0;
+
+                // 箱（Q1からQ3）
+                board.create(
+                    "polygon",
+                    [
+                        [q1, y - boxHeight / 2],
+                        [q3, y - boxHeight / 2],
+                        [q3, y + boxHeight / 2],
+                        [q1, y + boxHeight / 2],
+                    ],
+                    {
+                        strokeColor: style.strokeColor || "#2ECC40",
+                        fillColor: style.fillColor || "#2ECC40",
+                        strokeWidth: 1,
+                        ...style,
+                    }
+                );
+
+                // 中央線（メディアン）
+                board.create(
+                    "line",
+                    [
+                        [median, y - boxHeight / 2],
+                        [median, y + boxHeight / 2],
+                    ],
+                    {
+                        strokeColor: "#000",
+                        strokeWidth: 2,
+                    }
+                );
+
+                // ひげ（最小値からQ1、Q3から最大値）
+                board.create(
+                    "line",
+                    [
+                        [min, y],
+                        [q1, y],
+                    ],
+                    {
+                        strokeColor: style.strokeColor || "#2ECC40",
+                        strokeWidth: 2,
+                    }
+                );
+                board.create(
+                    "line",
+                    [
+                        [q3, y],
+                        [max, y],
+                    ],
+                    {
+                        strokeColor: style.strokeColor || "#2ECC40",
+                        strokeWidth: 2,
+                    }
+                );
+
+                // ひげの端の線
+                board.create(
+                    "line",
+                    [
+                        [min, y - 0.1],
+                        [min, y + 0.1],
+                    ],
+                    {
+                        strokeColor: style.strokeColor || "#2ECC40",
+                        strokeWidth: 2,
+                    }
+                );
+                board.create(
+                    "line",
+                    [
+                        [max, y - 0.1],
+                        [max, y + 0.1],
+                    ],
+                    {
+                        strokeColor: style.strokeColor || "#2ECC40",
+                        strokeWidth: 2,
+                    }
+                );
+
+                // 統計量のラベル
+                board.create("text", [min, y - 1, `Min: ${min}`], {
+                    fontSize: 12,
+                    color: style.strokeColor || "#2ECC40",
+                });
+                board.create("text", [q1, y - 1, `Q1: ${q1}`], {
+                    fontSize: 12,
+                    color: style.strokeColor || "#2ECC40",
+                });
+                board.create("text", [median, y - 1, `Med: ${median}`], {
+                    fontSize: 12,
+                    color: style.strokeColor || "#2ECC40",
+                });
+                board.create("text", [q3, y - 1, `Q3: ${q3}`], {
+                    fontSize: 12,
+                    color: style.strokeColor || "#2ECC40",
+                });
+                board.create("text", [max, y - 1, `Max: ${max}`], {
+                    fontSize: 12,
+                    color: style.strokeColor || "#2ECC40",
+                });
+
+                // 説明テキスト
+                board.create("text", [-3.5, 2, `データ数: ${n}`], {
+                    fontSize: 14,
+                    color: style.strokeColor || "#2ECC40",
+                });
+                break;
+            }
+
             default:
                 console.warn("Unknown graph type:", graph.type);
                 break;
@@ -812,6 +1472,7 @@ const GraphModal: React.FC<GraphModalProps> = ({ open, onClose, graphs }) => {
                                     draw={(board) => drawGraph(board, graph)}
                                     width={400}
                                     height={300}
+                                    boundingbox={getBoundingBoxForGraph(graph)}
                                 />
                             </div>
                         );

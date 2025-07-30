@@ -364,6 +364,48 @@ $y = a(x-p)^2 + q$ の頂点は $(p, q)$ ですが、$y = (x+1)^2 + 2$ の頂点
                         hint: "平方完成して標準形にしましょう。",
                     },
                 ]),
+                graphs: [
+                    {
+                        type: "circle",
+                        params: {
+                            center: [0, 0],
+                            radius: 2,
+                        },
+                        style: { strokeColor: "#FF4136" },
+                        description: "円の方程式 (x-0)² + (y-0)² = 2²",
+                    },
+                    {
+                        type: "ellipse",
+                        params: {
+                            center: [0, 0],
+                            semiMajorAxis: 3,
+                            semiMinorAxis: 2,
+                        },
+                        style: { strokeColor: "#0074D9" },
+                        description: "楕円の方程式 x²/3² + y²/2² = 1",
+                    },
+                    {
+                        type: "hyperbola",
+                        params: {
+                            center: [0, 0],
+                            semiMajorAxis: 2,
+                            semiMinorAxis: 1,
+                            horizontal: true,
+                        },
+                        style: { strokeColor: "#2ECC40" },
+                        description: "双曲線の方程式 x²/2² - y²/1² = 1",
+                    },
+                    {
+                        type: "parabola",
+                        params: {
+                            vertex: [0, 0],
+                            focus: [0, 1],
+                            horizontal: false,
+                        },
+                        style: { strokeColor: "#FF6B6B" },
+                        description: "放物線の方程式 y = 0.25x²",
+                    },
+                ],
             },
             {
                 title: "2次関数の最大・最小",
@@ -2009,6 +2051,44 @@ $P(X = k) = {}_n C_k p^k (1-p)^{n-k}$
                         hint: "68-95-99.7ルールを使います。$\\sigma = 5$ なので、$50 \\pm 5$ の範囲です。",
                     },
                 ]),
+                graphs: [
+                    {
+                        type: "histogram",
+                        params: {
+                            data: [1, 2, 2, 3, 3, 3, 4, 4, 5, 5, 5, 6, 6, 7, 8],
+                            bins: 8,
+                        },
+                        style: { strokeColor: "#FF6B6B", fillColor: "#FF6B6B" },
+                        description: "データの分布を表すヒストグラム",
+                    },
+                    {
+                        type: "scatter",
+                        params: {
+                            dataPairs: [
+                                [1, 2],
+                                [2, 3],
+                                [3, 1],
+                                [4, 4],
+                                [5, 2],
+                                [6, 5],
+                                [7, 3],
+                                [8, 6],
+                                [9, 4],
+                                [10, 7],
+                            ],
+                        },
+                        style: { strokeColor: "#0074D9", fillColor: "#0074D9" },
+                        description: "2変量データの相関関係を表す散布図",
+                    },
+                    {
+                        type: "boxplot",
+                        params: {
+                            data: [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15],
+                        },
+                        style: { strokeColor: "#2ECC40", fillColor: "#2ECC40" },
+                        description: "データの統計量を表す箱ひげ図",
+                    },
+                ],
             },
             {
                 title: "区間推定",

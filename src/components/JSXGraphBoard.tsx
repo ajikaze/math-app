@@ -5,12 +5,14 @@ interface JSXGraphBoardProps {
     draw: (board: JXG.Board) => void;
     width: number;
     height: number;
+    boundingbox?: [number, number, number, number]; // 追加
 }
 
 const JSXGraphBoard: React.FC<JSXGraphBoardProps> = ({
     draw,
     width,
     height,
+    boundingbox, // 追加
 }) => {
     const boardRef = useRef<HTMLDivElement>(null);
     const jxgBoard = useRef<JXG.Board | null>(null);
@@ -28,7 +30,7 @@ const JSXGraphBoard: React.FC<JSXGraphBoardProps> = ({
                         jxgBoard.current = null;
                     }
                     const board = JXG.JSXGraph.initBoard(boardRef.current!, {
-                        boundingbox: [-2, 5, 8, -2], // 表示範囲を拡大
+                        boundingbox: boundingbox || [-4, 4, 4, -4], // propsから受け取る、デフォルトは従来通り
                         axis: true,
                         showNavigation: false,
                         showCopyright: false,
@@ -54,7 +56,7 @@ const JSXGraphBoard: React.FC<JSXGraphBoardProps> = ({
                 }
             }
         };
-    }, [draw, width, height]);
+    }, [draw, width, height, boundingbox]); // boundingboxを依存配列に追加
 
     return (
         <div
