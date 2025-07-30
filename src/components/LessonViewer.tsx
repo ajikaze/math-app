@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import type { LearningTopic, LearningStep } from "../data/lessonsData";
 import MathJaxDisplay from "./MathJaxDisplay";
 import { toLatexMath } from "../data/lessonsData";
+import GraphModal from "./GraphModal";
 
 interface LessonViewerProps {
     currentTopic: LearningTopic;
@@ -47,6 +48,9 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
                 : []
         );
     }, [currentStep]);
+
+    // 参考グラフモーダルの開閉状態
+    const [graphModalOpen, setGraphModalOpen] = useState(false);
 
     return (
         <div className="bg-white p-6 rounded-lg shadow-md">
@@ -97,6 +101,22 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
                         }
                     })()}
                 </div>
+                {/* 参考グラフボタンとモーダル */}
+                {currentStep.graphs && currentStep.graphs.length > 0 && (
+                    <>
+                        <button
+                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                            onClick={() => setGraphModalOpen(true)}
+                        >
+                            参考グラフ
+                        </button>
+                        <GraphModal
+                            open={graphModalOpen}
+                            onClose={() => setGraphModalOpen(false)}
+                            graphs={currentStep.graphs}
+                        />
+                    </>
+                )}
             </div>
 
             {currentStep.pitfall && (
