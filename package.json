@@ -10,6 +10,7 @@
     },
     "dependencies": {
         "@vercel/node": "^5.3.6",
+        "jsxgraph": "^1.11.1",
         "node-fetch": "^2.6.13",
         "react": "^19.1.0",
         "react-dom": "^19.1.0",
