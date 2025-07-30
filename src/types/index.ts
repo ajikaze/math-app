@@ -61,3 +61,25 @@ export interface AppSettings {
     difficulty: "easy" | "medium" | "hard";
     autoSave: boolean;
 }
+
+// JSXGraphで使うグラフ情報
+export type GraphData = {
+    type: "line" | "circle" | "function" | "triangle" | "scatter" | string;
+    params: Record<string, any>;
+    style?: {
+        strokeColor?: string;
+        fillColor?: string;
+        strokeWidth?: number;
+        [key: string]: any;
+    };
+    description?: string;
+};
+
+// Step型やProblem型に追加（既存定義がある場合は拡張、なければ新規定義）
+export type Step = {
+    title: string;
+    explanation: string;
+    graph?: GraphData; // 単一グラフ
+    graphs?: GraphData[]; // 複数グラフ
+    // ...他のフィールド
+};
