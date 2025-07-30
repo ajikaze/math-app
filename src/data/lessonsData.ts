@@ -1,3 +1,5 @@
+import type { GraphData } from "../types/index";
+
 // 学習ステップの落とし穴の型定義
 interface Pitfall {
     title: string;
@@ -17,6 +19,7 @@ export interface LearningStep {
     explanation: string;
     pitfall: Pitfall;
     problems?: Problem[];
+    graphs?: GraphData[]; // JSXGraph用グラフ情報
 }
 
 // 学習トピックの型定義
@@ -799,6 +802,81 @@ const mathALessons: LearningTopic[] = [
 ・特殊な点の性質を理解する
 ・図を描いて確認することが重要
 `,
+                graphs: [
+                    {
+                        type: "triangle",
+                        params: {
+                            points: [
+                                [0, 0],
+                                [3, 0],
+                                [1.5, 2.5],
+                            ],
+                        },
+                        style: { strokeColor: "#0074D9" },
+                        description: "三角形ABCの基本形",
+                    },
+                    {
+                        type: "triangle",
+                        params: {
+                            points: [
+                                [0, 0],
+                                [6, 0],
+                                [3, 5],
+                            ],
+                            similarity: true,
+                        },
+                        style: { strokeColor: "#2ECC40" },
+                        description: "相似な三角形DEF",
+                    },
+                    {
+                        type: "centroid",
+                        params: {
+                            points: [
+                                [0, 0],
+                                [3, 0],
+                                [1.5, 2.5],
+                            ],
+                        },
+                        style: { strokeColor: "#FF4136" },
+                        description: "三角形の重心",
+                    },
+                    {
+                        type: "incenter",
+                        params: {
+                            points: [
+                                [0, 0],
+                                [3, 0],
+                                [1.5, 2.5],
+                            ],
+                        },
+                        style: { strokeColor: "#B10DC9" },
+                        description: "三角形の内心",
+                    },
+                    {
+                        type: "circumcenter",
+                        params: {
+                            points: [
+                                [0, 0],
+                                [3, 0],
+                                [1.5, 2.5],
+                            ],
+                        },
+                        style: { strokeColor: "#FF851B" },
+                        description: "三角形の外心",
+                    },
+                    {
+                        type: "orthocenter",
+                        params: {
+                            points: [
+                                [0, 0],
+                                [3, 0],
+                                [1.5, 2.5],
+                            ],
+                        },
+                        style: { strokeColor: "#001f3f" },
+                        description: "三角形の垂心",
+                    },
+                ],
                 pitfall: {
                     title: "よくある間違い：合同条件と相似条件の混同",
                     detail: `
