@@ -1205,14 +1205,14 @@ const math2Lessons: LearningTopic[] = [
                 problems: normalizeProblems([
                     {
                         question:
-                            "$(x^2 + 3x + 2)$ を $(x+1)$ で割ると、商は $x+2$、余りは $0$ です。",
-                        answer: "商: $x^2-x+2$, 余り: $1$",
+                            "$(x^2 + 3x + 2)$ を $(x+1)$ で割った商と余りを求めなさい。",
+                        answer: "商: $x+2$, 余り: $0$",
                         hint: "筆算で計算してみましょう。",
                     },
                     {
                         question:
-                            "$\\frac{1}{x} + \\frac{1}{x+1} = \\frac{x+1}{x(x+1)} + \\frac{x}{x(x+1)} = \\frac{2x+1}{x(x+1)}$",
-                        answer: "$2x/(x^2-1)$",
+                            "$\\frac{1}{x} + \\frac{1}{x+1}$ を計算しなさい。",
+                        answer: "$\\frac{2x+1}{x(x+1)}$",
                         hint: "通分しましょう。",
                     },
                 ]),
