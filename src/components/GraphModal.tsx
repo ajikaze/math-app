@@ -1,5 +1,8 @@
 import React from "react";
 import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
 import Slider from "react-slick";
 import JSXGraphBoard from "./JSXGraphBoard";
 import type { GraphData } from "../types";
@@ -1452,8 +1455,28 @@ const GraphModal: React.FC<GraphModalProps> = ({ open, onClose, graphs }) => {
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-            <div style={{ padding: 24 }}>
-                <h3>参考グラフ ({graphs.length}個)</h3>
+            <DialogTitle>
+                <span>参考グラフ ({graphs.length}個)</span>
+            </DialogTitle>
+            {/* 固定位置の閉じるボタン */}
+            <IconButton
+                aria-label="close"
+                onClick={onClose}
+                sx={{
+                    position: "fixed",
+                    right: 24,
+                    top: 24,
+                    color: "white",
+                    zIndex: 9999,
+                    // backgroundColor: "rgba(255, 255, 255, 0.9)",
+                    // "&:hover": {
+                    //     backgroundColor: "rgba(255, 255, 255, 1)",
+                    // },
+                }}
+            >
+                <CloseIcon />
+            </IconButton>
+            <div style={{ padding: "0 24px 24px 24px" }}>
                 <Slider
                     dots
                     infinite

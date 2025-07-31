@@ -179,18 +179,26 @@ export const SubjectPage: React.FC<SubjectPageProps> = ({
             {/* 目次モーダル */}
             {showTableOfContents && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-4">
+                    <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto relative">
+                        <div className="mb-4">
                             <h2 className="text-xl font-bold text-gray-800">
                                 学習目次
                             </h2>
-                            <button
-                                onClick={() => setShowTableOfContents(false)}
-                                className="text-gray-500 hover:text-gray-700"
-                            >
-                                ✕
-                            </button>
                         </div>
+                        {/* 固定位置の閉じるボタン */}
+                        <button
+                            onClick={() => setShowTableOfContents(false)}
+                            className="fixed text-white w-10 h-10 flex items-center justify-center text-xl font-bold z-[9999]"
+                            // className="fixed text-gray-500 hover:text-gray-700 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold z-[9999]"
+                            style={{
+                                right: "24px",
+                                top: "24px",
+                                // right: "16px",
+                                // top: "16px",
+                            }}
+                        >
+                            ✕
+                        </button>
                         <div className="space-y-4">
                             {lessonsData.map((topic, topicIdx) => (
                                 <div
